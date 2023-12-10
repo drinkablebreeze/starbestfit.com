@@ -24,17 +24,57 @@ export const EventResponse = z.object({
 })
 export type EventResponse = z.infer<typeof EventResponse>
 
-export const PersonInput = z.object({
+// Frontend types for availability. Breaks binary yes/no availability
+// represented as the time string into a TimeScore containing the time
+// string and the score given to the time. When interfacing with the backend
+// the time string and the score are contatenated with an underscore,
+// e.g. '1100-12042021_4' <- the time was scored a 4
+export type TimeScore = {
+  time: string,
+  score: number,
+}
+export type PersonInput = {
+  availability: TimeScore[],
+}
+export type PersonResponse = {
+  name: string,
+  availability: TimeScore[],
+  created_at: number,
+}
+
+// Backend types for availability.
+export const APIPersonInput = z.object({
   availability: z.string().array(),
 })
-export type PersonInput = z.infer<typeof PersonInput>
+export type APIPersonInput = z.infer<typeof APIPersonInput>
 
-export const PersonResponse = z.object({
+export const APIPersonResponse = z.object({
   name: z.string(),
   availability: z.string().array(),
   created_at: z.number(),
 })
-export type PersonResponse = z.infer<typeof PersonResponse>
+export type APIPersonResponse = z.infer<typeof APIPersonResponse>
+
+const serialize_timescore = (ts: TimeScore): string => `${ts.time}_${ts.score}`
+const deserialize_timescore = (ts: string): TimeScore => {
+  const [timeStr, scoreStr] = ts.split('_')
+  const score = parseInt(scoreStr)
+  if (isNaN(score)) {
+    console.warn("Failed to parse score string " + scoreStr + ". Assuming 0.")
+  }
+  const clamped = Math.min(Math.max(score, 0), 5) // clamp to 0-5 range
+  return { time: timeStr, score: clamped }
+}
+const serialize_personinput = (input: PersonInput): APIPersonInput => {
+  return { availability: input.availability.map(serialize_timescore) }
+}
+const deserialize_personresponse = (response: APIPersonResponse): PersonResponse => {
+  return {
+    name: response.name,
+    availability: response.availability.map(deserialize_timescore),
+    created_at: response.created_at,
+  }
+}
 
 export const StatsResponse = z.object({
   event_count: z.number(),
@@ -72,9 +112,19 @@ const post = async <S extends z.Schema>(url: string, schema: S, input: unknown, 
 // Get
 export const getStats = () => get('/stats', StatsResponse, undefined, { revalidate: 60 })
 export const getEvent = (eventId: string) => get(`/event/${eventId}`, EventResponse)
-export const getPeople = (eventId: string) => get(`/event/${eventId}/people`, PersonResponse.array())
-export const getPerson = (eventId: string, personName: string, password?: string) => get(`/event/${eventId}/people/${personName}`, PersonResponse, password && btoa(password))
+export const getPeople = async (eventId: string) => {
+  const res = await get(`/event/${eventId}/people`, APIPersonResponse.array())
+  return res.map(deserialize_personresponse)
+}
+export const getPerson = async (eventId: string, personName: string, password?: string) => {
+  const res = await get(`/event/${eventId}/people/${personName}`, APIPersonResponse, password && btoa(password))
+  return deserialize_personresponse(res)
+}
 
 // Post
 export const createEvent = (input: EventInput) => post('/event', EventResponse, EventInput.parse(input))
-export const updatePerson = (eventId: string, personName: string, input: PersonInput, password?: string) => post(`/event/${eventId}/people/${personName}`, PersonResponse, PersonInput.parse(input), password && btoa(password), 'PATCH')
+export const updatePerson = async (eventId: string, personName: string, input: PersonInput, password?: string) => {
+  const validated_input = APIPersonInput.parse(serialize_personinput(input))
+  const res = await post(`/event/${eventId}/people/${personName}`, APIPersonResponse, validated_input, password && btoa(password), 'PATCH')
+  return deserialize_personresponse(res)
+}
