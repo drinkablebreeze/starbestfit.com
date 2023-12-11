@@ -1,13 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import { TimeScore } from '/src/config/api'
+
 export interface RecentEvent {
   id: string
   name: string
   created_at: number
   user?: {
     name: string
-    availability: string[]
+    availability: TimeScore[]
   }
 }
 

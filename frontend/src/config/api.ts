@@ -2,6 +2,8 @@
 
 import { z } from 'zod'
 
+import { MAXSCORE } from '../utils/star'
+
 if (process.env.NEXT_PUBLIC_API_URL === undefined) {
   throw new Error('Expected API url environment variable')
 }
@@ -58,11 +60,14 @@ export type APIPersonResponse = z.infer<typeof APIPersonResponse>
 const serialize_timescore = (ts: TimeScore): string => `${ts.time}_${ts.score}`
 const deserialize_timescore = (ts: string): TimeScore => {
   const [timeStr, scoreStr] = ts.split('_')
-  const score = parseInt(scoreStr)
+  let score = parseInt(scoreStr)
   if (isNaN(score)) {
     console.warn("Failed to parse score string " + scoreStr + ". Assuming 0.")
+    score = 0
   }
-  const clamped = Math.min(Math.max(score, 0), 5) // clamp to 0-5 range
+  // clamp to valid range so people can't tamper with the results others see by
+  // sending out of bound scores to the API
+  const clamped = Math.min(Math.max(score, 0), MAXSCORE)
   return { time: timeStr, score: clamped }
 }
 const serialize_personinput = (input: PersonInput): APIPersonInput => {

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Temporal } from '@js-temporal/polyfill'
 
 import Button from '/src/components/Button/Button'
+import { TimeScore } from '/src/config/api'
 import { useTranslation } from '/src/i18n/client'
 import CrabIcon from '/src/res/CrabIcon'
 import { useStore } from '/src/stores'
@@ -13,7 +14,7 @@ import styles from '../GoogleCalendar/GoogleCalendar.module.scss'
 interface RecentEventsProps {
   eventId?: string
   times: string[]
-  onImport: (availability: string[]) => void
+  onImport: (availability: TimeScore[]) => void
 }
 
 const hasAvailability = (event: RecentEvent): event is Required<RecentEvent> => event.user !== undefined
@@ -24,7 +25,7 @@ const RecentEvents = ({ eventId, times, onImport }: RecentEventsProps) => {
   const allRecents = useStore(useRecentsStore, state => state.recents)
   const recents = useMemo(() => allRecents
     ?.filter(hasAvailability)
-    .filter(e => e.id !== eventId && e.user.availability.some(a => times.includes(a))) ?? [],
+    .filter(e => e.id !== eventId && e.user.availability.some(a => times.includes(a.time))) ?? [],
   [allRecents])
 
   const [isOpen, setIsOpen] = useState(false)
@@ -36,7 +37,7 @@ const RecentEvents = ({ eventId, times, onImport }: RecentEventsProps) => {
     const selectedRecent = recents.find(r => r.id === selected)
     if (!selectedRecent) return
 
-    onImport(selectedRecent.user.availability.filter(a => times.includes(a)))
+    onImport(selectedRecent.user.availability.filter(a => times.includes(a.time)))
   }, [selected, recents])
 
   // No recents

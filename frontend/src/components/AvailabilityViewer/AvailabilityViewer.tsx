@@ -11,7 +11,8 @@ import { usePalette } from '/src/hooks/usePalette'
 import { useTranslation } from '/src/i18n/client'
 import { useStore } from '/src/stores'
 import useSettingsStore from '/src/stores/settingsStore'
-import { calculateAvailability, calculateTable, makeClass, relativeTimeFormat } from '/src/utils'
+import { calculateAvailability, calculateTable, makeClass, NameScore, relativeTimeFormat } from '/src/utils'
+import { MAXSCORE } from '/src/utils/star'
 
 import styles from './AvailabilityViewer.module.scss'
 import Skeleton from './components/Skeleton/Skeleton'
@@ -34,7 +35,7 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
     anchor: HTMLDivElement
     available: string
     date: string
-    people: string[]
+    people: NameScore[]
   }>()
   const { refs, floatingStyles } = useFloating({
     middleware: [offset(6), flip(), shift()],
@@ -48,11 +49,19 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
 
   // Create the colour palette
   const palette = usePalette(Math.max((max - min) + 1, 2))
+  const tempFocusPalette = usePalette(MAXSCORE + 1)
 
   // Reselect everyone if the amount of people changes
   useEffect(() => {
     setFilteredPeople(people.map(p => p.name))
   }, [people.length])
+
+  // add the score to each name
+  const formatNameScores = (nameScores: NameScore[]): string[] => {
+    return nameScores
+      .sort((p1, p2) => p2.score - p1.score) // sort descending by score
+      .map(p => `${p.name} (${p.score})`)
+  }
 
   const heatmap = useMemo(() => table?.columns.map((column, x) => <Fragment key={x}>
     {column ? <div className={styles.dateColumn}>
@@ -75,34 +84,45 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
 
           let peopleHere = availabilities.find(a => a.date === cell.serialized)?.people ?? []
           if (tempFocus) {
-            peopleHere = peopleHere.filter(p => p === tempFocus)
+            peopleHere = peopleHere.filter(p => p.name === tempFocus)
           }
-          const color = palette[(tempFocus && peopleHere.length) ? Math.min(max, palette.length - 1) : Math.max(peopleHere.length - min, 0)]
+          // sum of the scores for the current cell
+          const hereCount = peopleHere.reduce((sum, p) => sum += p.score, 0)
+          const paletteIndex = Math.max(hereCount - min, 0)
+          const color = (tempFocus && peopleHere.length)
+            ? tempFocusPalette[peopleHere[0].score]
+            : palette[paletteIndex]
+          const peopleHereString = formatNameScores(peopleHere).join(', ')
 
           return <div
             key={y}
             className={makeClass(
               styles.time,
               styles.nonEditable,
-              (focusCount === undefined || focusCount === peopleHere.length) && highlight && (peopleHere.length === max || tempFocus) && peopleHere.length > 0 && styles.highlight,
+              (focusCount === undefined || focusCount === hereCount) // whether to show
+                && highlight
+                && (hereCount === max || (tempFocus && hereCount === MAXSCORE)) // only the highest scoring times
+                && peopleHere.length > 0
+                && styles.highlight,
             )}
             style={{
-              backgroundColor: (focusCount === undefined || focusCount === peopleHere.length) ? color.string : 'transparent',
+              backgroundColor: (focusCount === undefined || focusCount === hereCount)
+                ? color.string : 'transparent',
               '--highlight-color': color.highlight,
               ...cell.minute !== 0 && cell.minute !== 30 && { borderTopColor: 'transparent' },
               ...cell.minute === 30 && { borderTopStyle: 'dotted' },
             } as React.CSSProperties}
-            aria-label={peopleHere.join(', ')}
+            aria-label={peopleHereString}
             onMouseEnter={e => {
               setTooltip({
                 anchor: e.currentTarget,
-                available: `${peopleHere.length} / ${filteredPeople.length} ${t('available')}`,
+                available: `${(hereCount / filteredPeople.length).toFixed(2)}`,
                 date: cell.label,
                 people: peopleHere,
               })
             }}
             onClick={() => {
-              const clipboardMessage = `${t('group.clipboard_message', { date: cell.label })}:\n${peopleHere.join(', ')}`
+              const clipboardMessage = `${t('group.clipboard_message', { date: cell.label })}:\n${peopleHereString}`
               navigator.clipboard.writeText(clipboardMessage)
             }}
             onMouseLeave={() => setTooltip(undefined)}
@@ -128,7 +148,7 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
       <Legend
         min={min}
         max={max}
-        total={filteredPeople.length}
+        totalPeople={filteredPeople.length}
         palette={palette}
         onSegmentFocus={setFocusCount}
       />
@@ -187,8 +207,11 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
           <h3>{tooltip.available}</h3>
           <span>{tooltip.date}</span>
           {!!filteredPeople.length && <div>
-            {tooltip.people.map(person => <span key={person}>{person}</span>)}
-            {filteredPeople.filter(p => !tooltip.people.includes(p)).map(person =>
+            {formatNameScores(tooltip.people).map(person => <span key={person}>{person}</span>)}
+            {formatNameScores(filteredPeople
+              .filter(p => !tooltip.people.map(p2 => p2.name).includes(p))
+              .map(p => ({ name: p, score: 0 }))
+            ).map(person =>
               <span key={person} data-disabled>{person}</span>
             )}
           </div>}

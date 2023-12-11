@@ -2,9 +2,11 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 
 import Button from '/src/components/Button/Button'
 import Content from '/src/components/Content/Content'
+import { TimeScore } from '/src/config/api'
 import { usePalette } from '/src/hooks/usePalette'
 import { useTranslation } from '/src/i18n/client'
 import { calculateTable, makeClass, parseSpecificDate } from '/src/utils'
+import { getScoreForTime, MAXSCORE } from '/src/utils/star'
 
 import styles from './AvailabilityEditor.module.scss'
 import GoogleCalendar from './components/GoogleCalendar/GoogleCalendar'
@@ -16,12 +18,13 @@ interface AvailabilityEditorProps {
   eventId?: string
   times: string[]
   timezone: string
-  value: string[]
-  onChange: (value: string[]) => void
+  value: TimeScore[]
+  selectedScore: number // selected score to mark
+  onChange: (value: TimeScore[]) => void
   table?: ReturnType<typeof calculateTable>
 }
 
-const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, table }: AvailabilityEditorProps) => {
+const AvailabilityEditor = ({ eventId, times, timezone, value = [], selectedScore, onChange, table }: AvailabilityEditorProps) => {
   const { t } = useTranslation('event')
 
   // Ref and state required to rerender but also access static version in callbacks
@@ -36,12 +39,22 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, ta
   const mode = useRef<'add' | 'remove'>()
 
   // Create the colour palette
-  const palette = usePalette(2)
+  const palette = usePalette(MAXSCORE + 1)
 
   // Selection control
-  const selectAll = useCallback(() => onChange(times), [onChange, times])
+  const selectAll = useCallback(() => onChange(
+    times.map(t => ({
+      time: t,
+      score: selectedScore // set all times to the selected score
+    }))
+  ), [onChange, times, selectedScore])
   const selectNone = useCallback(() => onChange([]), [onChange])
-  const selectInvert = useCallback(() => onChange(times.filter(t => !value.includes(t))), [onChange, times, value])
+  const selectInvert = useCallback(() => onChange(
+    times.map(t => ({
+      time: t,
+      score: MAXSCORE - getScoreForTime(t, value), // invert all scores
+    }))
+  ), [onChange, times, value])
 
   // Selection keyboard shortcuts
   useEffect(() => {
@@ -74,6 +87,7 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, ta
           timeStart={parseSpecificDate(times[0])}
           timeEnd={parseSpecificDate(times[times.length - 1]).add({ minutes: 15 })}
           times={times}
+          selectedScore={selectedScore}
           onImport={onChange}
         />
         <RecentEvents
@@ -116,33 +130,45 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, ta
                     title={t('greyed_times')}
                   />
 
-                  const isSelected = (
-                    (!(mode.current === 'remove' && selecting.includes(cell.serialized)) && value.includes(cell.serialized))
-                    || (mode.current === 'add' && selecting.includes(cell.serialized))
-                  )
+                  const isSelected = selecting.includes(cell.serialized)
+                  const isAdd = mode.current === 'add'
+                  const currentScore = getScoreForTime(cell.serialized, value)
+                  const isSelectedScore = currentScore === selectedScore
 
                   return <div
                     key={y}
                     className={makeClass(viewerStyles.time, selecting.length === 0 && viewerStyles.editable)}
                     style={{
                       touchAction: 'none',
-                      backgroundColor: isSelected ? palette[1].string : palette[0].string,
-                      '--hover-color': isSelected ? palette[0].highlight : palette[1].highlight,
+                      backgroundColor: isSelected && isAdd
+                        ? palette[selectedScore].string // selecting+adding -> use selected score
+                        : isSelected ? palette[0].string // selecting+removing -> use zero score
+                          : palette[currentScore].string, // no select
+                      '--hover-color': palette[currentScore].highlight,
                       ...cell.minute !== 0 && cell.minute !== 30 && { borderTopColor: 'transparent' },
                       ...cell.minute === 30 && { borderTopStyle: 'dotted' },
                     } as React.CSSProperties}
                     onPointerDown={e => {
                       e.preventDefault()
                       startPos.current = { x, y }
-                      mode.current = value.includes(cell.serialized) ? 'remove' : 'add'
+                      // if we start selection on a region that has the same score as the selected score,
+                      // we start a remove operation which clears the selection to a zero score
+                      mode.current = isSelectedScore ? 'remove' : 'add'
                       setSelecting([cell.serialized])
                       e.currentTarget.releasePointerCapture(e.pointerId)
 
                       document.addEventListener('pointerup', () => {
+                        // current availability with the selected region removed
+                        const selectingRemoved = value.filter(ts => !selectingRef.current.includes(ts.time))
                         if (mode.current === 'add') {
-                          onChange([...value, ...selectingRef.current])
+                          // selecting region with the selected score
+                          const selectingScored = selectingRef.current.map(t => ({
+                            time: t,
+                            score: selectedScore
+                          }))
+                          onChange([...selectingRemoved, ...selectingScored])
                         } else if (mode.current === 'remove') {
-                          onChange(value.filter(t => !selectingRef.current.includes(t)))
+                          onChange(selectingRemoved)
                         }
                         setSelecting([])
                         mode.current = undefined

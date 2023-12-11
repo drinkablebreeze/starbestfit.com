@@ -16,6 +16,7 @@ import { useStore } from '/src/stores'
 import useRecentsStore from '/src/stores/recentsStore'
 import useSettingsStore from '/src/stores/settingsStore'
 import { calculateTable, expandTimes, makeClass } from '/src/utils'
+import { dropZeroScores } from '/src/utils/star'
 
 import styles from './page.module.scss'
 
@@ -79,6 +80,8 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
         .catch(console.warn)
     }
   }, [tab])
+
+  const selectedScore = Math.floor(Math.random() * (5 + 1)) // TODO: component and useState
 
   return <>
     <Section id="login">
@@ -171,8 +174,10 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
       times={expandedTimes}
       timezone={timezone}
       value={user.availability}
+      selectedScore={selectedScore}
       onChange={availability => {
         if (!event) return
+        availability = dropZeroScores(availability)
         const oldAvailability = [...user.availability]
         setUser({ ...user, availability })
         addRecent({

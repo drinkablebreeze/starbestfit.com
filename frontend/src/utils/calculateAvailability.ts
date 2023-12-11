@@ -1,19 +1,30 @@
+import { TimeScore } from "/src/config/api"
+
+import { getScoreForTime } from "./star"
+
 interface Person {
   name: string
-  availability: string[]
+  availability: TimeScore[]
 }
 
+// A person and the score they gave a date
+export interface NameScore {
+  name: string,
+  score: number,
+}
+
+// Availability for a date
 interface Availability {
   date: string
-  /** Names of everyone who is available at this date */
-  people: string[]
+  /** Names of everyone who is available (>0 score) at this date with their scores */
+  people: NameScore[]
 }
 
 interface AvailabilityInfo {
   availabilities: Availability[]
-  /** The amount of people available in the date with lowest availability */
+  /** The total score for the date with lowest availability */
   min: number
-  /** The amount of people available in the date with highest availability */
+  /** The total score for the date with highest availability */
   max: number
 }
 
@@ -23,18 +34,27 @@ interface AvailabilityInfo {
  * group availability for each date passed in.
  */
 export const calculateAvailability = (dates: string[], people: Person[]): AvailabilityInfo => {
-  let min = people.length
-  let max = 0
+  if (people.length === 0) {
+    // short circuit so we don't return infinities
+    return { availabilities: [], min: 0, max: 0 }
+  }
+  let min = Infinity
+  let max = -Infinity
 
   const availabilities: Availability[] = dates.map(date => {
-    const names = people.flatMap(p => p.availability.some(d => d === date) ? [p.name] : [])
-    if (names.length < min) {
-      min = names.length
+    // for a date, get the names of people that gave a score > 0 and their score
+    const nameScores = people.flatMap(p => {
+      const score = getScoreForTime(date, p.availability)
+      return score > 0 ? [({ name: p.name, score: score })] : []
+    })
+    const totalScore = nameScores.reduce((sum, curr) => sum += curr.score, 0)
+    if (totalScore < min) {
+      min = totalScore
     }
-    if (names.length > max) {
-      max = names.length
+    if (totalScore > max) {
+      max = totalScore
     }
-    return { date, people: names }
+    return { date, people: nameScores }
   })
 
   return { availabilities, min, max }

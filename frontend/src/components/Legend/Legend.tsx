@@ -7,18 +7,22 @@ import styles from './Legend.module.scss'
 interface LegendProps {
   min: number
   max: number
-  total: number
+  totalPeople: number
   palette: { string: string, highlight: string }[]
   onSegmentFocus: (segment: number | undefined) => void
 }
 
-const Legend = ({ min, max, total, palette, onSegmentFocus }: LegendProps) => {
+const Legend = ({ min, max, totalPeople, palette, onSegmentFocus }: LegendProps) => {
   const { t } = useTranslation('event')
   const highlight = useStore(useSettingsStore, state => state.highlight)
   const setHighlight = useSettingsStore(state => state.setHighlight)
 
+  // minimum and maximum average scores given to any timeslot
+  const minAvgScore = (min / totalPeople).toFixed(2)
+  const maxAvgScore = (max / totalPeople).toFixed(2)
+
   return <div className={styles.wrapper}>
-    <label className={styles.label}>{min}/{total} {t('available')}</label>
+    <label className={styles.label}>{minAvgScore}</label>
 
     <div
       className={styles.bar}
@@ -36,7 +40,7 @@ const Legend = ({ min, max, total, palette, onSegmentFocus }: LegendProps) => {
       )}
     </div>
 
-    <label className={styles.label}>{max}/{total} {t('available')}</label>
+    <label className={styles.label}>{maxAvgScore}</label>
   </div>
 }
 

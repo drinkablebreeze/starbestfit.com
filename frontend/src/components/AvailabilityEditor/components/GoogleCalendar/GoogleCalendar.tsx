@@ -3,6 +3,7 @@ import Script from 'next/script'
 import { Temporal } from '@js-temporal/polyfill'
 
 import Button from '/src/components/Button/Button'
+import { TimeScore } from '/src/config/api'
 import { useTranslation } from '/src/i18n/client'
 import GoogleIcon from '/src/res/GoogleIcon'
 import { allowUrlToWrap, parseSpecificDate } from '/src/utils'
@@ -40,10 +41,11 @@ interface GoogleCalendarProps {
   timeStart: Temporal.ZonedDateTime
   timeEnd: Temporal.ZonedDateTime
   times: string[]
-  onImport: (availability: string[]) => void
+  selectedScore: number
+  onImport: (availability: TimeScore[]) => void
 }
 
-const GoogleCalendar = ({ timezone, timeStart, timeEnd, times, onImport }: GoogleCalendarProps) => {
+const GoogleCalendar = ({ timezone, timeStart, timeEnd, times, selectedScore, onImport }: GoogleCalendarProps) => {
   if (!clientId || !apiKey) return null
 
   const { t } = useTranslation('event')
@@ -96,7 +98,9 @@ const GoogleCalendar = ({ timezone, timeStart, timeEnd, times, onImport }: Googl
           end: new Date(a.end).valueOf(),
         }))) : []
 
-        onImport(times.filter((_, i) => !availabilities.some(a => epochTimes[i] >= a.start && epochTimes[i] < a.end)))
+        // Set all times where nothing is booked to the selected score
+        onImport(times.filter((_, i) => !availabilities.some(a => epochTimes[i] >= a.start && epochTimes[i] < a.end))
+          .map(t => ({time: t, score: selectedScore})))
         setIsLoadingAvailability(false)
       }, e => {
         console.error(e)
