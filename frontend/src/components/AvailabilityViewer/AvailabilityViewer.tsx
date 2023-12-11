@@ -12,7 +12,7 @@ import { useTranslation } from '/src/i18n/client'
 import { useStore } from '/src/stores'
 import useSettingsStore from '/src/stores/settingsStore'
 import { calculateAvailability, calculateTable, makeClass, NameScore, relativeTimeFormat } from '/src/utils'
-import { MAXSCORE } from '/src/utils/star'
+import { calcAverageScore, MAXSCORE } from '/src/utils/star'
 
 import styles from './AvailabilityViewer.module.scss'
 import Skeleton from './components/Skeleton/Skeleton'
@@ -116,7 +116,9 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
             onMouseEnter={e => {
               setTooltip({
                 anchor: e.currentTarget,
-                available: `${(hereCount / filteredPeople.length).toFixed(2)}`,
+                available:
+                  `${Math.round(calcAverageScore(hereCount, filteredPeople.length) * 100)
+                    / 100} ${t('stars')}`,
                 date: cell.label,
                 people: peopleHere,
               })

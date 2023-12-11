@@ -81,8 +81,6 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
     }
   }, [tab])
 
-  const selectedScore = Math.floor(Math.random() * (5 + 1)) // TODO: component and useState
-
   return <>
     <Section id="login">
       <Content>
@@ -174,7 +172,6 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
       times={expandedTimes}
       timezone={timezone}
       value={user.availability}
-      selectedScore={selectedScore}
       onChange={availability => {
         if (!event) return
         availability = dropZeroScores(availability)

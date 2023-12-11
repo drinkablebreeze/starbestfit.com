@@ -1,0 +1,62 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-gap: 2px;
+
+  & button:first-of-type {
+    border-top-left-radius: 3px;
+  }
+  & button:nth-of-type(6) {
+    border-top-right-radius: 3px;
+  }
+  & button:nth-last-of-type(6) {
+    border-bottom-left-radius: 3px;
+  }
+  & button:last-of-type {
+    border-bottom-right-radius: 3px;
+  }
+}
+
+.score {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  margin: 0;
+  appearance: none;
+  transition: background-color .1s;
+  background-color: var(--surface);
+  border: 1px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0;
+  user-select: none;
+  touch-action: none;
+  cursor: pointer;
+  position: relative;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.selected {
+  color: #FFF;
+  background-color: var(--primary);
+}
+
+.star {
+  width: 2.5rem;
+  height: 2.5rem;
+  opacity: 0.8;
+}
+
+.text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Shifted down slightly to fit in the centroid of the star */
+  transform: translate(0, 0.04rem) translate(-50%, -50%);
+  z-index: 1;
+}

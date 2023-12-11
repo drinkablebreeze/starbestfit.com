@@ -29,8 +29,8 @@ export type EventResponse = z.infer<typeof EventResponse>
 // Frontend types for availability. Breaks binary yes/no availability
 // represented as the time string into a TimeScore containing the time
 // string and the score given to the time. When interfacing with the backend
-// the time string and the score are contatenated with an underscore,
-// e.g. '1100-12042021_4' <- the time was scored a 4
+// the time string and the score are contatenated with a double underscore,
+// e.g. '1100-12042021__4' <- the time was scored a 4
 export type TimeScore = {
   time: string,
   score: number,
@@ -57,13 +57,14 @@ export const APIPersonResponse = z.object({
 })
 export type APIPersonResponse = z.infer<typeof APIPersonResponse>
 
-const serialize_timescore = (ts: TimeScore): string => `${ts.time}_${ts.score}`
+const serialize_timescore = (ts: TimeScore): string => `${ts.time}__${ts.score}`
 const deserialize_timescore = (ts: string): TimeScore => {
-  const [timeStr, scoreStr] = ts.split('_')
+  const [timeStr, scoreStr] = ts.split('__')
   let score = parseInt(scoreStr)
   if (isNaN(score)) {
-    console.warn("Failed to parse score string " + scoreStr + ". Assuming 0.")
-    score = 0
+    // if we can't parse out the score we assume it's the max, enabling
+    // backwards-compatibility with prior non-scored availabilities in the database
+    score = MAXSCORE
   }
   // clamp to valid range so people can't tamper with the results others see by
   // sending out of bound scores to the API

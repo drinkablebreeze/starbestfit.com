@@ -1,6 +1,7 @@
 import { useTranslation } from '/src/i18n/client'
 import { useStore } from '/src/stores'
 import useSettingsStore from '/src/stores/settingsStore'
+import { calcAverageScore } from '/src/utils/star'
 
 import styles from './Legend.module.scss'
 
@@ -18,11 +19,11 @@ const Legend = ({ min, max, totalPeople, palette, onSegmentFocus }: LegendProps)
   const setHighlight = useSettingsStore(state => state.setHighlight)
 
   // minimum and maximum average scores given to any timeslot
-  const minAvgScore = (min / totalPeople).toFixed(2)
-  const maxAvgScore = (max / totalPeople).toFixed(2)
+  const minAvgScore = Math.round(calcAverageScore(min, totalPeople) * 100) / 100
+  const maxAvgScore = Math.round(calcAverageScore(max, totalPeople) * 100) / 100
 
   return <div className={styles.wrapper}>
-    <label className={styles.label}>{minAvgScore}</label>
+    <label className={styles.label}>{minAvgScore} {t('stars')}</label>
 
     <div
       className={styles.bar}
@@ -40,7 +41,7 @@ const Legend = ({ min, max, totalPeople, palette, onSegmentFocus }: LegendProps)
       )}
     </div>
 
-    <label className={styles.label}>{maxAvgScore}</label>
+    <label className={styles.label}>{maxAvgScore} {t('stars')}</label>
   </div>
 }
 

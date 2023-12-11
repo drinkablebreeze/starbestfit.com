@@ -11,6 +11,7 @@ import { getScoreForTime, MAXSCORE } from '/src/utils/star'
 import styles from './AvailabilityEditor.module.scss'
 import GoogleCalendar from './components/GoogleCalendar/GoogleCalendar'
 import RecentEvents from './components/RecentEvents/RecentEvents'
+import ScoreSelector from './components/ScoreSelector/ScoreSelector'
 import viewerStyles from '../AvailabilityViewer/AvailabilityViewer.module.scss'
 import Skeleton from '../AvailabilityViewer/components/Skeleton/Skeleton'
 
@@ -19,12 +20,11 @@ interface AvailabilityEditorProps {
   times: string[]
   timezone: string
   value: TimeScore[]
-  selectedScore: number // selected score to mark
   onChange: (value: TimeScore[]) => void
   table?: ReturnType<typeof calculateTable>
 }
 
-const AvailabilityEditor = ({ eventId, times, timezone, value = [], selectedScore, onChange, table }: AvailabilityEditorProps) => {
+const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, table }: AvailabilityEditorProps) => {
   const { t } = useTranslation('event')
 
   // Ref and state required to rerender but also access static version in callbacks
@@ -40,6 +40,8 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], selectedScor
 
   // Create the colour palette
   const palette = usePalette(MAXSCORE + 1)
+
+  const [selectedScore, setSelectedScore] = useState<number>(MAXSCORE)
 
   // Selection control
   const selectAll = useCallback(() => onChange(
@@ -97,6 +99,12 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], selectedScor
         />
       </div>
     </Content>}
+    <Content>
+      <ScoreSelector
+        value={selectedScore}
+        onChange={setSelectedScore}
+      />
+    </Content>
 
     <div className={viewerStyles.wrapper}>
       <div>
