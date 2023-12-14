@@ -1,8 +1,95 @@
-// Helpers for defining star voting and computing results
+/* STAR Voting definitions and tabulation routines
+ *
+ * We adhere as closely as possible to the official STAR Voting protocol.
+ * However, some deviations are necessary to adapt STAR to this application.
+ *
+ * Basic rules:         https://www.starvoting.org/star
+ * Tiebreaking rules:   https://www.starvoting.org/ties
+ *
+ * # Scores for "Meeting Times" Average the Component Timeslot Scores
+ *
+ * In the app, people score times in 15-minute timeslots. This is less than a
+ * meeting might actually be scheduled for. E.g. 60 minutes encompasses 4
+ * timeslots. We need a way to consider someone's score for the full meeting
+ * time. To do this, a person's score for a meeting time is calculated to be the
+ * average of the scores that they gave to each of its component timeslots.
+ *
+ * # Excluding Overlaps
+ *
+ * With long meeting times, there is significant overlap between possible times,
+ * which are considered at each 15-minute step. We need to ensure that the
+ * runoff round is not a choice between two options that are substantially the
+ * same. E.g. for a 60-minute meeting, 11:00 and 11:15 are very similar options
+ * that share 3/4 of the same scoring. If 11:00 is the highest scoring time,
+ * 11:15 is very likely to be the second highest scoring time, making the runoff
+ * less meaningful.
+ *
+ * 11:00 +------+               <-- highest scoring time
+ * 11:15 |      | +------+
+ * 11:30 | 4.33 | |      |      <-- second highest scoring time significantly
+ * 11:45 |      | | 4.17 |          overlaps the highest scoring time
+ * 12:00 +------+ |      |
+ * 12:15          +------+
+ *
+ * To fix this similarity in the runoff, we first find the highest scoring
+ * candidate (using the tiebreaking protocols if needed) that is guaranteed to
+ * make it to the runoff. Then we exclude any other candidates that partially
+ * overlap with this highest scoring candidate. With this done, we start the
+ * official STAR Voting protocol from the beginning. This way the candidates in
+ * the runoff are guaranteed to not overlap, and the second choice option is a
+ * more interesting alternative.
+ *
+ * # 5-Star Tiebreaking Rule
+ *
+ * In the official tiebreaking rules, some ties are broken by considering the
+ * number of 5-star ratings that are awarded to a candidate. Because rating a
+ * time 5 stars in _all_ of its component timeslots is a higher bar than a
+ * single 5 star rating for a single timeslot, there is the risk that only a
+ * small number of voters will sway the tiebreak if this is taken to be the tie
+ * breaking method. To avoid this, we define the 5-star rule to count anytime a
+ * person's score for a full meeting time is closer to a 5-star rating than a
+ * 4-star rating, which means the average score for the full meeting time is
+ * above a 4.5. An exact 4.5 is not closer to 5 than to 4, so we we take the
+ * metric to be anytime the average score is strictly greater than 4.5.
+ *
+ * Rating for a single timeslot, the possible scores are:
+ * |   |   |   |   |   |    <-- bars are possible scores
+ * 0   1   2   3   4   5
+ *                   ^--------- assuming a linear gradient of voter support
+ *                              (which should happen with minimal strategic
+ *                              voting, which STAR is designed to mitigate),
+ *                              and assuming voters approximately round their
+ *                              preferences into the nearest discrete rating,
+ *                              then anything above a 4.5 preference should
+ *                              fall into the 5-star category
+ *
+ * For a 60-minute meeting time made up of 4 timeslots, possible averages are:
+ * |...|...|...|...|...|    <-- dots are new average scores that are possible
+ * 0   1   2   3   4   5
+ *                   ^--------- 4.5 remains as the threshold for the 5-star
+ *                              tiebreaking rule, using the assumption of
+ *                              preference linearity
+ *
+ * # Coin Toss Tiebreaking Rule
+ *
+ * Since results are computed anytime the page is loaded, we need a way to
+ * deterministically compute coin toss results. We do this by seeding a
+ * pseudorandom number generator with the event id, then drawing a pseudorandom
+ * number in the range 0-1 for each possible timeslot in a determined order.
+ * When tiebreaking, the time with the higher random number is determined to be
+ * the winner. This way a new ordering between times is picked for every event.
+ */
 
-import { TimeScore } from '/src/config/api'
+import { Temporal } from '@js-temporal/polyfill'
+import seedrandom from 'seedrandom'
+
+import { PersonResponse, TimeScore } from '/src/config/api'
+import { Availability, calculateAvailability, NameScore } from '/src/utils/calculateAvailability'
+
+import { convertTimesToDates } from './convertTimesToDates'
 
 export const MAXSCORE = 5 // minimum score always assumed to be 0
+export const TIMESLOT_MINUTES = 15 // length of timeslots in minutes
 
 // Get the current score for a time given some availability. If a time is not
 // present in the availability, we assume its value is zero.
@@ -12,7 +99,7 @@ export const getScoreForTime = (time: string, availability: TimeScore[]): number
 }
 
 // Filter out times where the score is 0. In our representation, any missing
-// times are assumes to be a zero score, so we can avoid persisting them and use
+// times are assumed to be a zero score, so we can avoid persisting them and use
 // their absence as an indicator of unavailability.
 export const dropZeroScores = (availability: TimeScore[]): TimeScore[] => {
   return availability.filter(item => item.score > 0)
@@ -22,4 +109,303 @@ export const dropZeroScores = (availability: TimeScore[]): TimeScore[] => {
 // and the number of people that voted.
 export const calcAverageScore = (totalScore: number, numPeople: number): number => {
   return numPeople ? (totalScore / numPeople) : 0
+}
+
+
+/***** STAR Voting Tabulation *****/
+
+export interface StarResults {
+  bestTime?: string,
+  nextBest?: string,
+  preferredFraction?: number // exists if both bestTime and nextBest exist
+}
+
+export const calculateBestTime = (times: string[], people: PersonResponse[]): StarResults => {
+  saneConsoleLogger('\nSTART')
+  const duration = 60
+  const eventId = "an id"
+  const fullPeopleScores = replaceScoresWithFullScores(people, duration)
+  // collate the list of people's responses to the candidate times
+  const dateCollated = calculateAvailability(times, fullPeopleScores)
+  let candidates = calculateSimpleCandidateMetrics(dateCollated.availabilities, eventId)
+  candidates = removeOverlapsWithTopScorer(candidates, duration)
+  return calculateStarBest(candidates)
+}
+
+// Change each person's score for a time to be the average score they would give
+// to a meeting time of the desired duration if it started at that time
+const replaceScoresWithFullScores = (
+  people: PersonResponse[],
+  duration: number,
+): (PersonResponse[]) => {
+  return people.map(p => {
+    const newAvailability = p.availability.map((a: TimeScore) => {
+      // timezone doesn't matter here, assume UTC
+      const t = convertTimesToDates([a.time], 'UTC')[0]
+      // filter TimeScores that cover the desired meeting duration starting at t
+      // (start <= other < start+duration), then sum up the scores
+      let score = p.availability
+        .filter((a2: TimeScore) => {
+          const t2 = convertTimesToDates([a2.time], 'UTC')[0]
+          return timeInsideRange(t2, [t, t.add({ minutes: duration })])
+        })
+        .reduce((sum: number, cur: TimeScore) => sum + cur.score, 0)
+      score = score / (duration / TIMESLOT_MINUTES)
+      return { time: a.time, score }
+    })
+    return {
+      name: p.name,
+      availability: newAvailability,
+      created_at: p.created_at,
+    }
+  })
+}
+
+// Determine if a time is within a range. Returns true if `other` is within the
+// time range bounded by range[0] and range[1], but not if it is equal to a bound
+//
+// Not considering a time to be inside the range if it is equal to a bound lets
+// us ignore cases where candidate times share a bound, but do not otherwise
+// overlap, and the case where a time's start or end is compared against itself,
+// as with the filter() call in removeOverlapsWithTopScorer.
+const timeInsideRange = (
+  other: Temporal.ZonedDateTime,
+  range: Temporal.ZonedDateTime[],
+): boolean => {
+  // https://tc39.es/proposal-temporal/docs/zoneddatetime.html#compare
+  return (Temporal.ZonedDateTime.compare(range[0], other) < 0)
+    && (Temporal.ZonedDateTime.compare(other, range[1]) < 0)
+}
+
+// Remove any candidates that overlap with the highest scoring candidate. This
+// ensures that the options in the runoff are interesting and don't significantly
+// overlap each other.
+const removeOverlapsWithTopScorer = (
+  candidates: Candidate[],
+  duration: number,
+): Candidate[] => {
+  if (candidates.length > 2) {
+    const highestScoredArr = 
+      calculateFullRound(1, candidates, ["score", "rankedRobin", "fiveStars", "random"])
+    const highestScored = highestScoredArr[0] as Candidate
+    const start = convertTimesToDates([highestScored.date], 'UTC')[0]
+    const end = start.add({ minutes: duration })
+    // we don't have to add back the highestScored because the start and end
+    // bounds are identical to the range we'd test against, and equality at the
+    // bounds is not counted as "inside"
+    candidates = candidates.filter(other => {
+      const otherStart = convertTimesToDates([other.date], 'UTC')[0]
+      const otherEnd = otherStart.add({ minutes: duration })
+      return !(timeInsideRange(otherStart, [start, end])
+              || timeInsideRange(otherEnd, [start, end]))
+    })
+  }
+  return candidates
+}
+
+interface Candidate {
+  date: string
+  people: NameScore[] // names and average scores given to the candidate
+  score: number // the total score given to this time
+  rankedWins?: number // number of 1-1 ranked wins for this time over other times
+  fiveStars: number // number of "five stars" given to the time (see docstring)
+  randomTieValue: number // random value in range 0-1 for tie breaking
+}
+
+// Calculate the simpler metrics that are used in tie breaking which do not
+// depend on the remaining candidates. Ranked robin is the exception here.
+const calculateSimpleCandidateMetrics = (
+  times: Availability[], 
+  eventId: string
+): Candidate[] => {
+  const scores = []
+  const fiveStars = []
+  const randomTieValues = []
+  // const myrng = new Math.seedrandom(eventId)
+  const myrng = seedrandom(eventId)
+  for (let i = 0; i < times.length; i++) {
+    scores.push(times[i].people.reduce((sum, p) => sum += p.score, 0))
+    fiveStars.push( // count time as five stars if the average score is >4.5
+      times[i].people.filter((p: NameScore) => p.score > (MAXSCORE - 0.5)).length
+    )
+    randomTieValues.push(myrng())
+  }
+  const candidates = []
+  for (let i = 0; i < times.length; i++) {
+    candidates.push(({
+      date: times[i].date,
+      people: times[i].people,
+      score: scores[i],
+      rankedWins: undefined, // computed for each ranked robin round
+      fiveStars: fiveStars[i],
+      randomTieValue: randomTieValues[i],
+    }))
+  }
+  return candidates
+}
+
+// Calulcate ranked robin wins among the remaining candidates. Since this scoring
+// depends on the number of candidates remaining, it is done before each ranked
+// robin round. Candidates' rankedWins values are edited in-place.
+const calculateRankedWins = (candidates: Candidate[]): void => {
+  const rankedWins = Array<number>(candidates.length).fill(0)
+  for (let i = 0; i < candidates.length; i++) {
+    // consider all pairs of people for ranked robin
+    for (let j = i + 1; j < candidates.length; j++) {
+      const a = candidates[i].people
+      const b = candidates[j].people
+      rankedWins[i] += calculateRankedWinsBetweenPair(a, b)
+      rankedWins[j] += calculateRankedWinsBetweenPair(b, a)
+    }
+    candidates[i].rankedWins = rankedWins[i]
+  }
+}
+
+// Calculate the number of rank wins of `a` over `b`
+const calculateRankedWinsBetweenPair = (a: NameScore[], b: NameScore[]): number => {
+  let aWins = 0
+  for (let k = 0; k < a.length; k++) { // iterate through people
+    const aNameScore = a[k]
+    const bNameScore = b.find(p => p.name === aNameScore.name)
+    if (bNameScore === undefined || aNameScore.score > bNameScore.score) {
+      // didn't rank `b` at all or `a` was ranked higher, count as a win for `a`
+      // (note: zero scores are not presisted in the data structure)
+      aWins++
+    }
+  }
+  return aWins
+}
+
+// Calculate the STAR Voting best pick
+const calculateStarBest = (candidates: Candidate[]): StarResults => {
+  // special cases
+  if (candidates.length === 0) {
+    return {
+      bestTime: undefined,
+      nextBest: undefined,
+      preferredFraction: undefined
+    }
+  }
+  if (candidates.length === 1) {
+    return {
+      bestTime: candidates[0].date,
+      nextBest: undefined,
+      preferredFraction: undefined
+    }
+  }
+  saneConsoleLogger(candidates)
+  if (candidates.length > 2) {
+    // scoring round -> find the top two by score
+    candidates =
+      calculateFullRound(2, candidates, ["score", "rankedRobin", "fiveStars", "random"])
+  }
+  saneConsoleLogger('starting runoff round')
+  saneConsoleLogger(candidates)
+  // runoff round -> find the winner by rankings
+  const winners =
+    calculateFullRound(1, candidates, ["rankedRobin", "score", "fiveStars", "random"])
+  const winner = winners[0] as Candidate
+  const second =
+    candidates.find((w: Candidate) => w.date !== winner.date) as Candidate
+  const winnerRankedWins = getMetric(winner, "rankedRobin")
+  const secondRankedWins = getMetric(second, "rankedRobin")
+  const preferredFraction = winnerRankedWins / (winnerRankedWins + secondRankedWins)
+  return {
+    bestTime: winner.date,
+    nextBest: second.date,
+    preferredFraction,
+  }
+}
+
+// Calculate a full round using a sequence of scoring functions / mini rounds.
+// Returns when the desired number of winning candidates has been found.
+const calculateFullRound = (
+  numWinners: number, // desired number of winners
+  candidates: Candidate[],
+  miniRounds: miniRoundType[],
+): Candidate[] => {
+  let winners: Candidate[] = []
+  for (let i = 0; i < miniRounds.length; i++) {
+    // `numWinners - winners.length` lets us break ties for second place, if needed
+    const roundResult =
+      calculateMiniRound(numWinners - winners.length, candidates, miniRounds[i])
+    saneConsoleLogger(i)
+    saneConsoleLogger(roundResult)
+    // save candidates that won in that miniround and remove from further tiebreaking
+    winners = winners.concat(roundResult.winners)
+    // remaining candidates tied for a winning spot in the mini round
+    candidates = roundResult.tied
+    if (winners.length === numWinners) {
+      break
+    }
+  }
+  return winners
+}
+
+interface MiniRoundResult {
+  /* The winners of the mini round */
+  winners: Candidate[],
+  /* Candidates that are still tied after this miniround */
+  tied: Candidate[],
+}
+
+// Compute the winning candidates and those that are still tied given a round
+// type. This is a "mini round" because only a single method is used to
+// distinguish between candidates and ties are not necessarily resolved.
+const calculateMiniRound = (
+  numWinners: number,
+  candidates: Candidate[],
+  roundType: miniRoundType
+): MiniRoundResult => {
+  saneConsoleLogger(roundType)
+  if (numWinners >= candidates.length) {
+    throw new Error("calculateMiniRound should be called with more candidates \
+                    than the desired number of winners")
+  }
+  if (roundType === "rankedRobin") {
+    // calculate ranked wins with the candidates still under consideration
+    saneConsoleLogger(candidates)
+    calculateRankedWins(candidates)
+    saneConsoleLogger(candidates)
+  }
+  const scoringFunc = (time: Candidate): number => getMetric(time, roundType)
+  candidates =
+    candidates.sort((a, b) => scoringFunc(b) - scoringFunc(a)) // sort descending
+  const scoreToBeat = scoringFunc(candidates[numWinners])
+  const winners = candidates.filter(w => scoringFunc(w) > scoreToBeat)
+  let tied: Candidate[]
+  if (winners.length === numWinners) {
+    tied = []
+  } else {
+    // didn't find enough winners, keep the candidates that were tied
+    tied = candidates.filter(w => scoringFunc(w) === scoreToBeat)
+  }
+  return { winners, tied }
+}
+
+type miniRoundType = "score" | "rankedRobin" | "fiveStars" | "random"
+
+// Retrieve a scoring metric for a candidate based on the mini round type
+const getMetric = (
+  candidate: Candidate,
+  metric: miniRoundType
+): number => {
+  if (metric === "score") {
+    return candidate.score
+  } else if (metric === "rankedRobin") {
+    if (candidate.rankedWins === undefined) {
+      throw new Error("ranked wins were not calculated before ranked robin round")
+    }
+    return candidate.rankedWins
+  } else if (metric === "fiveStars") {
+    return candidate.fiveStars
+  } else {
+    return candidate.randomTieValue
+  }
+}
+
+// ordinary console.log shows you the values inside the reference counted object
+// _after_they_have_been_changed_by_code_later_on_
+const saneConsoleLogger = (o: any): void => {
+  console.log(structuredClone(o))
 }

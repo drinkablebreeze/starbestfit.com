@@ -25,7 +25,7 @@ const ScoreSelector = ({ value, onChange }: ScoreSelectorProps) => {
         onClick={() => onChange(score)}
       >
         <span className={styles.text}>{score}</span>
-        {score > 0 && <StarIcon className={styles.star} stroke-width={1.2}/>}
+        {score > 0 && <StarIcon className={styles.star} strokeWidth={1.2}/>}
       </button>
     )}
   </div>
