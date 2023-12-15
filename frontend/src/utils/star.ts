@@ -120,16 +120,50 @@ export interface StarResults {
   preferredFraction?: number // exists if both bestTime and nextBest exist
 }
 
-export const calculateBestTime = (times: string[], people: PersonResponse[]): StarResults => {
+export const calculateBestTime = (
+  times: string[],
+  people: PersonResponse[],
+  duration: number,
+  eventId: string,
+  timeMap: TimeMap,
+): StarResults => {
   saneConsoleLogger('\nSTART')
-  const duration = 60
-  const eventId = "an id"
-  const fullPeopleScores = replaceScoresWithFullScores(people, duration)
+  if (people.length === 0) {
+    return ({
+      bestTime: undefined,
+      nextBest: undefined,
+      preferredFraction: undefined
+    })
+  }
+  const t0 = performance.now()
+  const fullPeopleScores = replaceScoresWithFullScores(people, duration, timeMap)
+  const t1 = performance.now()
+  console.log('replaceScoresWithFullScores: ' + (t1 - t0))
   // collate the list of people's responses to the candidate times
   const dateCollated = calculateAvailability(times, fullPeopleScores)
   let candidates = calculateSimpleCandidateMetrics(dateCollated.availabilities, eventId)
-  candidates = removeOverlapsWithTopScorer(candidates, duration)
-  return calculateStarBest(candidates)
+  candidates = removeOverlapsWithTopScorer(candidates, duration, timeMap)
+  const out = calculateStarBest(candidates)
+  const t5 = performance.now()
+  console.log('full thing: ' + (t5 - t0))
+  return out
+}
+
+export type TimeMap = {
+  [key: string]: Temporal.ZonedDateTime,
+}
+
+// Converting the time strings to Temporal.ZondedDateTime objects is costly, so
+// we mitigate this by calculating it only once for each time and putting
+// that in a map. E.g. for 224 times (7 days, 9:00-17:00), this takes ~16ms
+export const calculateTimeMap = (times: string[]): TimeMap => {
+  // timezone doesn't matter here, assume UTC
+  const timeObjects = convertTimesToDates(times, 'UTC')
+  const map: TimeMap = {}
+  for (let i = 0; i < times.length; i++) {
+    map[times[i]] = timeObjects[i]
+  }
+  return map
 }
 
 // Change each person's score for a time to be the average score they would give
@@ -137,20 +171,30 @@ export const calculateBestTime = (times: string[], people: PersonResponse[]): St
 const replaceScoresWithFullScores = (
   people: PersonResponse[],
   duration: number,
+  timeMap: TimeMap,
 ): (PersonResponse[]) => {
+  // number of timeslots the meeting spans
+  const numTimeslots = duration / TIMESLOT_MINUTES
   return people.map(p => {
-    const newAvailability = p.availability.map((a: TimeScore) => {
-      // timezone doesn't matter here, assume UTC
-      const t = convertTimesToDates([a.time], 'UTC')[0]
+    const withConvertedTimes = p.availability.map((a: TimeScore) => {
+      return ({
+        time: a.time,
+        timeObj: timeMap[a.time],
+        score: a.score
+      })
+    }).sort((a, b) => Temporal.ZonedDateTime.compare(a.timeObj, b.timeObj)) // sort asc
+    const newAvailability = withConvertedTimes.map((a, idx) => {
       // filter TimeScores that cover the desired meeting duration starting at t
-      // (start <= other < start+duration), then sum up the scores
-      let score = p.availability
-        .filter((a2: TimeScore) => {
-          const t2 = convertTimesToDates([a2.time], 'UTC')[0]
-          return timeInsideRange(t2, [t, t.add({ minutes: duration })])
-        })
-        .reduce((sum: number, cur: TimeScore) => sum + cur.score, 0)
-      score = score / (duration / TIMESLOT_MINUTES)
+      // (start < other < start+duration), then sum up the scores
+      const range = [a.timeObj, a.timeObj.add({ minutes: duration })]
+      // Performance is critical here to avoid n^2 complexity. Because the
+      // availabilities have been sorted, we can slice only up to numTimeslots
+      // in the future and only consider those as potential overlaps
+      let score = a.score + withConvertedTimes
+        .slice(idx, idx + numTimeslots) // only consider up to numTimeslots after
+        .filter(a2 => timeInsideRange(a2.timeObj, range))
+        .reduce((sum: number, cur) => sum + cur.score, 0)
+      score = score / (duration / TIMESLOT_MINUTES) // average over timelot units
       return { time: a.time, score }
     })
     return {
@@ -183,18 +227,19 @@ const timeInsideRange = (
 const removeOverlapsWithTopScorer = (
   candidates: Candidate[],
   duration: number,
+  timeMap: TimeMap,
 ): Candidate[] => {
   if (candidates.length > 2) {
     const highestScoredArr = 
       calculateFullRound(1, candidates, ["score", "rankedRobin", "fiveStars", "random"])
     const highestScored = highestScoredArr[0] as Candidate
-    const start = convertTimesToDates([highestScored.date], 'UTC')[0]
+    const start = timeMap[highestScored.date]
     const end = start.add({ minutes: duration })
     // we don't have to add back the highestScored because the start and end
     // bounds are identical to the range we'd test against, and equality at the
     // bounds is not counted as "inside"
     candidates = candidates.filter(other => {
-      const otherStart = convertTimesToDates([other.date], 'UTC')[0]
+      const otherStart = timeMap[other.date]
       const otherEnd = otherStart.add({ minutes: duration })
       return !(timeInsideRange(otherStart, [start, end])
               || timeInsideRange(otherEnd, [start, end]))
@@ -293,6 +338,7 @@ const calculateStarBest = (candidates: Candidate[]): StarResults => {
       preferredFraction: undefined
     }
   }
+  saneConsoleLogger("candidates")
   saneConsoleLogger(candidates)
   if (candidates.length > 2) {
     // scoring round -> find the top two by score
@@ -310,11 +356,13 @@ const calculateStarBest = (candidates: Candidate[]): StarResults => {
   const winnerRankedWins = getMetric(winner, "rankedRobin")
   const secondRankedWins = getMetric(second, "rankedRobin")
   const preferredFraction = winnerRankedWins / (winnerRankedWins + secondRankedWins)
-  return {
+  const result = ({
     bestTime: winner.date,
     nextBest: second.date,
     preferredFraction,
-  }
+  })
+  saneConsoleLogger(result)
+  return result
 }
 
 // Calculate a full round using a sequence of scoring functions / mini rounds.
@@ -329,7 +377,7 @@ const calculateFullRound = (
     // `numWinners - winners.length` lets us break ties for second place, if needed
     const roundResult =
       calculateMiniRound(numWinners - winners.length, candidates, miniRounds[i])
-    saneConsoleLogger(i)
+    saneConsoleLogger(i + " round result:")
     saneConsoleLogger(roundResult)
     // save candidates that won in that miniround and remove from further tiebreaking
     winners = winners.concat(roundResult.winners)
@@ -364,7 +412,7 @@ const calculateMiniRound = (
   }
   if (roundType === "rankedRobin") {
     // calculate ranked wins with the candidates still under consideration
-    saneConsoleLogger(candidates)
+    saneConsoleLogger("calculating rank wins")
     calculateRankedWins(candidates)
     saneConsoleLogger(candidates)
   }
