@@ -1,6 +1,7 @@
 {
   "available": "available",
-  "stars": "stars",
+  "stars_one": "{{count}} star",
+  "stars_other": "{{count}} stars",
   "greyed_times": "This area is greyed out because it's not part of the event. You may be looking at this event in a different timezone from where it was created.",
 
   "nav": {
@@ -51,11 +52,19 @@
     "legend_tooltip": "Click to highlight highest availability",
     "info1": "Hover or tap the calendar below to see who is available, and click to copy details about a time slot",
     "info2": "Click the names below to view people individually",
-    "clipboard_message": "People available on {{date}}"
+    "clipboard_message": "People available on {{date}}",
+    "best_fit1": "For an event duration of",
+    "best_fit2": "the best time is <strong>{{time}}</strong>",
+    "best_fit3": "<strong>{{bestTime}}</strong> and <strong>{{nextBest}}</strong> scored the highest with {{bestStars}} and {{nextStars}}. Among these two finalists, <strong>{{bestTime}}</strong> was preferred by {{frac}}% of people with a preference",
+    "hours_one": "{{count}} hour",
+    "hours_other": "{{count}} hours",
+    "minutes": "minutes"
   },
 
   "you": {
-    "info": "Click and drag the calendar below to set your availabilities. Give your preferred times five stars, your last choices zero stars, and score other times as desired.",
+    "info": "Click and drag the calendar below to set your availabilities",
+    "scoring_info": "Give your preferred times five stars, your last choices zero stars, and score other times as desired",
+    "tabulation_info": "The two highest scoring times are finalists. Your full vote goes to the finalist you prefer.",
     "select_all": "Select all",
     "select_none": "Select none",
     "select_invert": "Invert selection",

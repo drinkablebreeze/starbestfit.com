@@ -1,18 +1,21 @@
 'use client'
 
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
+import { Trans } from 'react-i18next/TransWithoutContext'
 import { flip, offset, shift, useFloating } from '@floating-ui/react-dom'
 import { Temporal } from '@js-temporal/polyfill'
 
 import Content from '/src/components/Content/Content'
 import Legend from '/src/components/Legend/Legend'
+import SelectField from '/src/components/SelectField/SelectField'
 import { PersonResponse } from '/src/config/api'
 import { usePalette } from '/src/hooks/usePalette'
 import { useTranslation } from '/src/i18n/client'
 import { useStore } from '/src/stores'
 import useSettingsStore from '/src/stores/settingsStore'
 import { calculateAvailability, calculateTable, makeClass, NameScore, relativeTimeFormat } from '/src/utils'
-import { calcAverageScore, MAXSCORE } from '/src/utils/star'
+import { averageAndRound, calculateBestTime, calculateTimeMap, MAXSCORE } from '/src/utils/star'
+import { timeToLocaleString } from '/src/utils/timeToLocaleString'
 
 import styles from './AvailabilityViewer.module.scss'
 import Skeleton from './components/Skeleton/Skeleton'
@@ -21,9 +24,15 @@ interface AvailabilityViewerProps {
   times: string[]
   people: PersonResponse[]
   table?: ReturnType<typeof calculateTable>
+  // meetingDuration: number
+  // setMeetingDuration: (newDur: number) => void,
+  meetingDurationState: [number, (newDur: number) => void]
+  eventId?: string // used to seed PRNG
+  timeFormat: '12h' | '24h'
+  timezone: string
 }
 
-const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) => {
+const AvailabilityViewer = ({ times, people, table, meetingDurationState, eventId, timeFormat, timezone}: AvailabilityViewerProps) => {
   const { t, i18n } = useTranslation('event')
 
   const highlight = useStore(useSettingsStore, state => state.highlight)
@@ -52,9 +61,11 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
   const tempFocusPalette = usePalette(MAXSCORE + 1)
 
   // Reselect everyone if the amount of people changes
-  useEffect(() => {
+  const [prevPeopleLength, setPrevPeople] = useState(people.length)
+  if (people.length !== prevPeopleLength) {
+    setPrevPeople(people.length)
     setFilteredPeople(people.map(p => p.name))
-  }, [people.length])
+  }
 
   // add the score to each name
   const formatNameScores = (nameScores: NameScore[]): string[] => {
@@ -62,6 +73,44 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
       .sort((p1, p2) => p2.score - p1.score) // sort descending by score
       .map(p => `${p.name} (${p.score})`)
   }
+
+  // memoize the mapping of time strings to Temporal.ZonedDateTime objects
+  const timeMap = useMemo(() => calculateTimeMap(times), [times])
+
+  const [meetingDuration, setMeetingDuration] = meetingDurationState
+  const durationOptions = Array.from(Array(24 * 4).keys()).map(x => (x + 1) * 15)
+  const durationLabels = durationOptions.map(
+    x => `${t('group.hours', {count: Math.floor(x / 60)})} ${x % 60} ${t('minutes')}`
+  )
+
+  const results = useMemo(
+    () => calculateBestTime(
+      times,
+      people.filter(p => filteredPeople.includes(p.name)),
+      meetingDuration,
+      eventId ?? "",
+      timeMap,
+    ),
+    [times, filteredPeople, people, meetingDuration, eventId, timeMap]
+  )
+  const bestFormatted = useMemo(() => results.bestTime ?        
+    {
+      time: timeToLocaleString(results.bestTime.time, i18n.language, timeFormat, timezone),
+      stars: t('stars', {count: averageAndRound(results.bestTime.score, filteredPeople.length)})
+    }
+    : undefined,
+  [results.bestTime, i18n.language, timeFormat, timezone, filteredPeople.length])
+  const nextFormatted = useMemo(() => results.nextBest ?        
+    {
+      time: timeToLocaleString(results.nextBest.time, i18n.language, timeFormat, timezone),
+      stars: t('stars', {count: averageAndRound(results.nextBest.score, filteredPeople.length)})
+    }
+    : undefined,
+  [results.nextBest, i18n.language, timeFormat, timezone, filteredPeople.length])
+  const fracFormatted = useMemo(() => (results.preferredFraction !== undefined)
+    ? (results.preferredFraction * 100).toFixed(2)
+    : undefined,
+  [results.preferredFraction])
 
   const heatmap = useMemo(() => table?.columns.map((column, x) => <Fragment key={x}>
     {column ? <div className={styles.dateColumn}>
@@ -116,9 +165,7 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
             onMouseEnter={e => {
               setTooltip({
                 anchor: e.currentTarget,
-                available:
-                  `${Math.round(calcAverageScore(hereCount, filteredPeople.length) * 100)
-                    / 100} ${t('stars')}`,
+                available: t('stars', {count: averageAndRound(hereCount, filteredPeople.length)}),
                 date: cell.label,
                 people: peopleHere,
               })
@@ -220,6 +267,42 @@ const AvailabilityViewer = ({ times, people, table }: AvailabilityViewerProps) =
         </div>}
       </div>
     </div>
+
+    {bestFormatted && <Content isCentered>
+      <div>
+        <SelectField
+          label={t('group.best_fit1')}
+          name="duration"
+          id="duration"
+          isInline={true}
+          value={durationLabels[durationOptions.indexOf(meetingDuration)]}
+          onChange={event => setMeetingDuration(durationOptions[durationLabels.indexOf(event.currentTarget.value)])}
+          options={durationLabels}
+        />
+        <p>
+          <Trans i18nKey="group.best_fit2" t={t} i18n={i18n}>
+            {/* eslint-disable-next-line */}
+            {/* @ts-ignore */}
+            _<strong>{{time: bestFormatted.time}}</strong>
+          </Trans>
+        </p>
+        {nextFormatted && (fracFormatted !== undefined) && <p>
+          <Trans i18nKey="group.best_fit3" t={t} i18n={i18n}>
+            {/* eslint-disable-next-line */}
+            {/* @ts-ignore */}
+            _<strong>{{bestTime: bestFormatted.time}}</strong>
+            {/* eslint-disable-next-line */}
+            {/* @ts-ignore */}
+            _<strong>{{nextBest: nextFormatted.time}}</strong>
+            {{
+              bestStars: bestFormatted.stars,
+              nextStars: nextFormatted.stars,
+              frac: fracFormatted,
+            }}
+          </Trans>
+        </p>}
+      </div>
+    </Content>}
   </>
 }
 

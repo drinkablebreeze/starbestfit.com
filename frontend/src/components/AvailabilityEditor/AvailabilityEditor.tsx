@@ -76,6 +76,7 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, ta
   return <>
     <Content isCentered>
       <div>{t('you.info')}</div>
+      <div>{t('you.scoring_info')}</div>
       <div className={styles.selectionControls}>
         <Button isSmall onClick={selectAll} title="Ctrl + A (⌘ A)">{t('you.select_all')}</Button>
         <Button isSmall onClick={selectNone} title="Ctrl + Shift + A (⌘ ⇧ A)">{t('you.select_none')}</Button>
@@ -207,6 +208,9 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, ta
         </div>
       </div>
     </div>
+    <Content isCentered>
+      <div>{t('you.tabulation_info')}</div>
+    </Content>
   </>
 }
 

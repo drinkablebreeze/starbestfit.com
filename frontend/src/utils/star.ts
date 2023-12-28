@@ -111,12 +111,17 @@ export const calcAverageScore = (totalScore: number, numPeople: number): number 
   return numPeople ? (totalScore / numPeople) : 0
 }
 
+export const averageAndRound = (score: number, numPeople: number): number => {
+  return Math.round(calcAverageScore(score, numPeople) * 100) / 100
+}
+
+
 
 /***** STAR Voting Tabulation *****/
 
 export interface StarResults {
-  bestTime?: string,
-  nextBest?: string,
+  bestTime?: TimeScore,
+  nextBest?: TimeScore,
   preferredFraction?: number // exists if both bestTime and nextBest exist
 }
 
@@ -127,7 +132,7 @@ export const calculateBestTime = (
   eventId: string,
   timeMap: TimeMap,
 ): StarResults => {
-  saneConsoleLogger('\nSTART')
+  saneConsoleLogger('\nCalulcating the best time')
   if (people.length === 0) {
     return ({
       bestTime: undefined,
@@ -137,15 +142,13 @@ export const calculateBestTime = (
   }
   const t0 = performance.now()
   const fullPeopleScores = replaceScoresWithFullScores(people, duration, timeMap)
-  const t1 = performance.now()
-  console.log('replaceScoresWithFullScores: ' + (t1 - t0))
   // collate the list of people's responses to the candidate times
   const dateCollated = calculateAvailability(times, fullPeopleScores)
   let candidates = calculateSimpleCandidateMetrics(dateCollated.availabilities, eventId)
   candidates = removeOverlapsWithTopScorer(candidates, duration, timeMap)
   const out = calculateStarBest(candidates)
   const t5 = performance.now()
-  console.log('full thing: ' + (t5 - t0))
+  console.log('Full STAR tabulation took ' + (t5 - t0) + ' ms')
   return out
 }
 
@@ -230,6 +233,7 @@ const removeOverlapsWithTopScorer = (
   timeMap: TimeMap,
 ): Candidate[] => {
   if (candidates.length > 2) {
+    saneConsoleLogger('0. Finding top scoring time and removing others that overlap')
     const highestScoredArr = 
       calculateFullRound(1, candidates, ["score", "rankedRobin", "fiveStars", "random"])
     const highestScored = highestScoredArr[0] as Candidate
@@ -333,19 +337,22 @@ const calculateStarBest = (candidates: Candidate[]): StarResults => {
   }
   if (candidates.length === 1) {
     return {
-      bestTime: candidates[0].date,
+      bestTime: {
+        time: candidates[0].date,
+        score: candidates[0].score,
+      },
       nextBest: undefined,
       preferredFraction: undefined
     }
   }
-  saneConsoleLogger("candidates")
+  saneConsoleLogger("1. Starting scoring round with candidates:")
   saneConsoleLogger(candidates)
   if (candidates.length > 2) {
     // scoring round -> find the top two by score
     candidates =
       calculateFullRound(2, candidates, ["score", "rankedRobin", "fiveStars", "random"])
   }
-  saneConsoleLogger('starting runoff round')
+  saneConsoleLogger('2. Starting runoff round with candidates:')
   saneConsoleLogger(candidates)
   // runoff round -> find the winner by rankings
   const winners =
@@ -355,12 +362,21 @@ const calculateStarBest = (candidates: Candidate[]): StarResults => {
     candidates.find((w: Candidate) => w.date !== winner.date) as Candidate
   const winnerRankedWins = getMetric(winner, "rankedRobin")
   const secondRankedWins = getMetric(second, "rankedRobin")
-  const preferredFraction = winnerRankedWins / (winnerRankedWins + secondRankedWins)
+  const totalRankedWins = winnerRankedWins + secondRankedWins
+  // report the number of preferences expressed as 0 and not NaN if nobody did
+  const preferredFraction = totalRankedWins ? winnerRankedWins / totalRankedWins : 0
   const result = ({
-    bestTime: winner.date,
-    nextBest: second.date,
+    bestTime: {
+      time: winner.date,
+      score: winner.score,
+    },
+    nextBest: {
+      time: second.date,
+      score: second.score,
+    },
     preferredFraction,
   })
+  saneConsoleLogger('3. Completed tabulation with results:')
   saneConsoleLogger(result)
   return result
 }
@@ -377,7 +393,7 @@ const calculateFullRound = (
     // `numWinners - winners.length` lets us break ties for second place, if needed
     const roundResult =
       calculateMiniRound(numWinners - winners.length, candidates, miniRounds[i])
-    saneConsoleLogger(i + " round result:")
+    saneConsoleLogger(miniRounds[i] + " round result:")
     saneConsoleLogger(roundResult)
     // save candidates that won in that miniround and remove from further tiebreaking
     winners = winners.concat(roundResult.winners)
@@ -385,6 +401,8 @@ const calculateFullRound = (
     candidates = roundResult.tied
     if (winners.length === numWinners) {
       break
+    } else {
+      saneConsoleLogger('Unbroken tie remains, continuing with tiebreaking...')
     }
   }
   return winners
@@ -405,14 +423,13 @@ const calculateMiniRound = (
   candidates: Candidate[],
   roundType: miniRoundType
 ): MiniRoundResult => {
-  saneConsoleLogger(roundType)
   if (numWinners >= candidates.length) {
     throw new Error("calculateMiniRound should be called with more candidates \
                     than the desired number of winners")
   }
   if (roundType === "rankedRobin") {
     // calculate ranked wins with the candidates still under consideration
-    saneConsoleLogger("calculating rank wins")
+    saneConsoleLogger("Calculating rank wins:")
     calculateRankedWins(candidates)
     saneConsoleLogger(candidates)
   }
