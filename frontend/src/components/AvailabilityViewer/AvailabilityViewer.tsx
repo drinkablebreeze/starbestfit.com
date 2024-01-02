@@ -8,7 +8,7 @@ import { Temporal } from '@js-temporal/polyfill'
 import Content from '/src/components/Content/Content'
 import Legend from '/src/components/Legend/Legend'
 import SelectField from '/src/components/SelectField/SelectField'
-import { PersonResponse } from '/src/config/api'
+import { PersonResponse, TimeScore } from '/src/config/api'
 import { usePalette } from '/src/hooks/usePalette'
 import { useTranslation } from '/src/i18n/client'
 import { useStore } from '/src/stores'
@@ -24,8 +24,6 @@ interface AvailabilityViewerProps {
   times: string[]
   people: PersonResponse[]
   table?: ReturnType<typeof calculateTable>
-  // meetingDuration: number
-  // setMeetingDuration: (newDur: number) => void,
   meetingDurationState: [number, (newDur: number) => void]
   eventId?: string // used to seed PRNG
   timeFormat: '12h' | '24h'
@@ -93,24 +91,22 @@ const AvailabilityViewer = ({ times, people, table, meetingDurationState, eventI
     ),
     [times, filteredPeople, people, meetingDuration, eventId, timeMap]
   )
-  const bestFormatted = useMemo(() => results.bestTime ?        
-    {
-      time: timeToLocaleString(results.bestTime.time, i18n.language, timeFormat, timezone),
-      stars: t('stars', {count: averageAndRound(results.bestTime.score, filteredPeople.length)})
+  const formatTime = (timeScore: TimeScore | undefined) =>
+    timeScore ? {
+      time: timeToLocaleString(timeScore.time, i18n.language, timeFormat, timezone),
+      stars: t('stars', {count: averageAndRound(timeScore.score, filteredPeople.length)})
     }
-    : undefined,
-  [results.bestTime, i18n.language, timeFormat, timezone, filteredPeople.length])
-  const nextFormatted = useMemo(() => results.nextBest ?        
-    {
-      time: timeToLocaleString(results.nextBest.time, i18n.language, timeFormat, timezone),
-      stars: t('stars', {count: averageAndRound(results.nextBest.score, filteredPeople.length)})
-    }
-    : undefined,
-  [results.nextBest, i18n.language, timeFormat, timezone, filteredPeople.length])
-  const fracFormatted = useMemo(() => (results.preferredFraction !== undefined)
-    ? (results.preferredFraction * 100).toFixed(2)
-    : undefined,
-  [results.preferredFraction])
+      : undefined
+  const [bestFormatted, nextFormatted, fracFormatted] = useMemo(() => {
+    return [
+      formatTime(results.bestTime),
+      formatTime(results.nextBest),
+      (results.preferredFraction !== undefined) // preferredFraction could be 0
+        ? (results.preferredFraction * 100).toFixed(2)
+        : undefined
+    ]
+  },
+  [results, i18n.language, timeFormat, timezone, filteredPeople.length])
 
   const heatmap = useMemo(() => table?.columns.map((column, x) => <Fragment key={x}>
     {column ? <div className={styles.dateColumn}>
