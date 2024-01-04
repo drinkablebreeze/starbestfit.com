@@ -113,7 +113,7 @@ fn generate_name() -> String {
     let crabs: Vec<String> = serde_json::from_slice(include_bytes!("../res/crabs.json")).unwrap();
 
     format!(
-        "{} {} Crab",
+        "{} {} Star",
         adjectives.choose(&mut thread_rng()).unwrap(),
         crabs.choose(&mut thread_rng()).unwrap()
     )
