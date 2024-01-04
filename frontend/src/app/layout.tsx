@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import { Karla } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/react'
 
 import Egg from '/src/components/Egg/Egg'
 import Settings from '/src/components/Settings/Settings'
@@ -44,7 +43,6 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
 
       {children}
 
-      <Analytics />
     </body>
   </html>
 }

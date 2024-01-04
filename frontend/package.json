@@ -16,7 +16,6 @@
     "@js-temporal/polyfill": "^0.4.4",
     "@microsoft/microsoft-graph-client": "^3.0.5",
     "@types/seedrandom": "^3.0.8",
-    "@vercel/analytics": "^1.0.1",
     "accept-language": "^3.0.18",
     "chroma.ts": "^1.0.10",
     "hue-map": "^1.0.0",
