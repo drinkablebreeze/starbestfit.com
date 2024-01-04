@@ -1,5 +1,4 @@
 {
-  "available": "available",
   "stars_one": "{{count}} star",
   "stars_other": "{{count}} stars",
   "greyed_times": "This area is greyed out because it's not part of the event. You may be looking at this event in a different timezone from where it was created.",
@@ -10,22 +9,22 @@
     "shareinfo": "Copy the link to this page, or share via <1>email</1>.",
     "shareinfo_alt": "Click the link above to copy it to your clipboard, or share via <1>email</1>.",
     "email_subject": "Scheduling {{event_name}}",
-    "email_body": "Visit this link to enter your availabilities:"
+    "email_body": "Visit this link to enter your preferences:"
   },
   "form": {
-    "signed_out": "Sign in to add your availability",
+    "signed_out": "Sign in to add your preferences",
     "signed_in": "Signed in as {{name}}",
 
     "name": "Your name",
     "password": "Password (optional)",
     "button": "Login",
     "logout_button": "Sign out",
-    "info": "These details are only for this event. Use a password to prevent others from changing your availability.",
+    "info": "These details are only for this event. Use a password to prevent others from changing your preferences.",
 
     "timezone": "Your time zone",
 
     "errors": {
-      "name_required": "Your name is needed to store your availability.",
+      "name_required": "Your name is needed to store your preferences.",
       "password_incorrect": "Password is incorrect. Check your name is spelled right.",
       "unknown": "Failed to login. Please try again."
     },
@@ -43,14 +42,14 @@
   },
 
   "tabs": {
-    "you": "Your availability",
-    "you_tooltip": "Login to set your availability",
-    "group": "Group availability"
+    "you": "Your preferences",
+    "you_tooltip": "Login to set your preferences",
+    "group": "Group preferences"
   },
 
   "group": {
-    "legend_tooltip": "Click to highlight highest availability",
-    "info1": "Hover or tap the calendar below to see who is available, and click to copy details about a time slot",
+    "legend_tooltip": "Click to highlight highest preference",
+    "info1": "Hover or tap the calendar below to see preferences, and click to copy details about a time slot",
     "info2": "Click the names below to view people individually",
     "clipboard_message": "People available on {{date}}",
     "best_fit1": "For an event duration of",
@@ -62,8 +61,8 @@
   },
 
   "you": {
-    "info": "Click and drag the calendar below to set your availabilities",
-    "scoring_info": "Give your preferred times five stars, your last choices zero stars, and score other times as desired",
+    "info": "Click and drag the calendar below to set your preferences",
+    "scoring_info": "The best time is calculated with <1>STAR Voting</1>. Give your preferred times five stars, your last choices zero stars, and score other times as desired.",
     "tabulation_info": "The two highest scoring times are finalists. Your full vote goes to the finalist you prefer.",
     "select_all": "Select all",
     "select_none": "Select none",
@@ -75,8 +74,8 @@
     "integration": {
       "logout": "log out",
       "close": "close",
-      "info": "Importing will overwrite your current availability",
-      "button": "Import availability"
+      "info": "Importing will overwrite your current preferences",
+      "button": "Import preferences"
     }
   }
 }
