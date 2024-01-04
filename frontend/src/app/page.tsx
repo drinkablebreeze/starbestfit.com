@@ -36,7 +36,7 @@ const Page = async () => {
           <Stats />
         </Suspense>
 
-        <P><Trans i18nKey="about.content.p1" t={t} i18n={i18n}>_<br /><Link href="/how-to" rel="help">_</Link>_</Trans></P>
+        <P><Trans i18nKey="about.content.p1" t={t} i18n={i18n}>_<Link href="https://www.starvoting.org/star">_</Link>_<br /><Link href="/how-to" rel="help">_</Link>_</Trans></P>
 
         <Video />
 

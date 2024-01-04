@@ -1,4 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { Trans } from 'react-i18next/TransWithoutContext'
+import Link from 'next/link'
 
 import Button from '/src/components/Button/Button'
 import Content from '/src/components/Content/Content'
@@ -25,7 +27,7 @@ interface AvailabilityEditorProps {
 }
 
 const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, table }: AvailabilityEditorProps) => {
-  const { t } = useTranslation('event')
+  const { t, i18n } = useTranslation('event')
 
   // Ref and state required to rerender but also access static version in callbacks
   const selectingRef = useRef<string[]>([])
@@ -76,7 +78,7 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, ta
   return <>
     <Content isCentered>
       <div>{t('you.info')}</div>
-      <div>{t('you.scoring_info')}</div>
+      <div><Trans i18nKey="you.scoring_info" t={t} i18n={i18n}>_<Link href="https://www.starvoting.org/star">_</Link>_</Trans></div>
       <div className={styles.selectionControls}>
         <Button isSmall onClick={selectAll} title="Ctrl + A (⌘ A)">{t('you.select_all')}</Button>
         <Button isSmall onClick={selectNone} title="Ctrl + Shift + A (⌘ ⇧ A)">{t('you.select_none')}</Button>

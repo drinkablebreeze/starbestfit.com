@@ -18,13 +18,13 @@ export const metadata: Metadata = {
     absolute: 'Crab Fit',
     template: '%s - Crab Fit',
   },
-  keywords: ['crab', 'fit', 'crabfit', 'schedule', 'availability', 'availabilities', 'when2meet', 'doodle', 'meet', 'plan', 'time', 'timezone'],
-  description: 'Enter your availability to find a time that works for everyone!',
+  keywords: ['crab', 'fit', 'crabfit', 'schedule', 'availability', 'availabilities', 'preferences', 'when2meet', 'doodle', 'meet', 'plan', 'time', 'timezone'],
+  description: 'Enter your preferences to find a time that works for everyone!',
   themeColor: '#F79E00',
   manifest: 'manifest.json',
   openGraph: {
     title: 'Crab Fit',
-    description: 'Enter your availability to find a time that works for everyone!',
+    description: 'Enter your preferences to find a time that works for everyone!',
     url: '/',
   },
   icons: {

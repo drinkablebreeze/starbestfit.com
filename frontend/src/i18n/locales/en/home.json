@@ -43,9 +43,9 @@
   "about": {
     "name": "About Crab Fit",
     "events": "Events created",
-    "availabilities": "Availabilities entered",
+    "availabilities": "Preferences entered",
     "content": {
-      "p1": "Crab Fit helps you fit your event around everyone's schedules. Simply create an event above and send the link to everyone that is participating. Results update live and you will be able to see a heat-map of when everyone is free.<1/><2>Learn more about how to Crab Fit</2>.",
+      "p1": "Crab Fit helps you fit your event around everyone's schedules. Simply create an event above and send the link to everyone that is participating. Results update live and you will be able to see a heat-map of everyone's preferences. The best time for your desired event duration is calculated using <1>STAR Voting</1>.<3/><4>Learn more about how to Crab Fit</4>.",
       "p3": "Created by <1>Ben Grant</1>, Crab Fit is the modern-day solution to your group event planning debates.",
       "p4": "The code for Crab Fit is open source, if you find any issues or want to contribute, you can visit the <1>repository</1>. By using Crab Fit you agree to the <3>privacy policy</3>.",
       "p6": "To protect your privacy, events are deleted after 3 months of inactivity, and all passwords are securely hashed.",

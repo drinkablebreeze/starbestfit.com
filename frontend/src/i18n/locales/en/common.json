@@ -33,8 +33,8 @@
       }
     },
     "highlight": {
-      "label": "Highlight highest availability",
-      "title": "Make the highest availability on the heatmap stand out",
+      "label": "Highlight highest preference",
+      "title": "Make the highest preference on the heatmap stand out",
       "options": {
         "Off": "Off",
         "On": "On"
