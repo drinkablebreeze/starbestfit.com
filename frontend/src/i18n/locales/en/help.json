@@ -13,11 +13,11 @@
   "s2": "Step 2",
 
   "p6": "Enter your availability for the event you just created.",
-  "p7": "In our example, Jenny now puts in her availability for her birthday lunch. She is free all week, except after 3pm on Tuesday and Wednesday, and before 1pm on Friday.",
+  "p7": "In our example, Jenny now puts in her availability for her birthday lunch. She most prefers having it on Thursday, her birthday, so she marks all times on Thursday as 5 stars. For other days, she prefers an on-time lunch, so she marks 11:30am to 2pm as 4 stars. She has commitments after 3pm on Tuesday and Wednesday, and before 1pm on Friday, so she leaves these times as 0 stars, and marks everything else as 2 stars.",
 
   "s3": "Step 3",
 
   "p8": "Send the link to everyone you want to come.",
-  "p9": "After Jenny has sent the link to her friends and waited for them to also fill out their availabilities, she can now easily see them all on the heatmap below and choose the darkest area for a time that suits everyone!",
-  "p10": "In this example, 1pm to 3pm on Friday the 16th works for all Jenny's friends."
+  "p9": "After Jenny has sent the link to her friends and waited for them to also fill out their availabilities, she can now easily see them all on the heatmap below, along with the best time according to <1>STAR Voting</1>!",
+  "p10": "In this example, 1pm on Friday the 16th is the best time for a 1 to 3 hour event."
 }

@@ -171,7 +171,7 @@ export const calculateBestTime = (
     })
   }
   const t0 = performance.now()
-  const fullPeopleScores = replaceScoresWithFullScores(people, duration, timeMap)
+  const fullPeopleScores = replaceScoresWithFullScores(times, people, duration, timeMap)
   // collate the list of people's responses to the candidate times
   const dateCollated = calculateAvailability(times, fullPeopleScores)
   let candidates =
@@ -204,6 +204,7 @@ export const calculateTimeMap = (times: string[]): TimeMap => {
 // Change each person's score for a time to be the average score they would give
 // to a meeting time of the desired duration if it started at that time
 const replaceScoresWithFullScores = (
+  times: string[],
   people: PersonResponse[],
   duration: number,
   timeMap: TimeMap,
@@ -211,21 +212,25 @@ const replaceScoresWithFullScores = (
   // number of timeslots the meeting spans
   const numTimeslots = duration / TIMESLOT_MINUTES
   return people.map(p => {
-    const withConvertedTimes = p.availability.map((a: TimeScore) => {
+    // expand to all possible times, even if unscored, so times are still
+    // considered when the event duration extends over a scored time range
+    const fullAvailability = times.map((time: string) => {
+      const avail = p.availability.find(a => a.time === time)
+      const score = avail ? avail.score : 0
       return ({
-        time: a.time,
-        timeObj: timeMap[a.time],
-        score: a.score
+        time,
+        timeObj: timeMap[time],
+        score,
       })
     }).sort((a, b) => Temporal.ZonedDateTime.compare(a.timeObj, b.timeObj)) // sort asc
-    const newAvailability = withConvertedTimes.map((a, idx) => {
+    const newAvailability = fullAvailability.map((a, idx) => {
       // filter TimeScores that cover the desired meeting duration starting at t
       // (start < other < start+duration), then sum up the scores
       const range = [a.timeObj, a.timeObj.add({ minutes: duration })]
       // Performance is critical here to avoid n^2 complexity. Because the
       // availabilities have been sorted, we can slice only up to numTimeslots
       // in the future and only consider those as potential overlaps
-      const score = a.score + withConvertedTimes
+      const score = a.score + fullAvailability
         .slice(idx, idx + numTimeslots) // only consider up to numTimeslots after
         .filter(a2 => timeInsideRange(a2.timeObj, range))
         .reduce((sum: number, cur) => sum + cur.score, 0)
@@ -235,7 +240,7 @@ const replaceScoresWithFullScores = (
     })
     return {
       name: p.name,
-      availability: newAvailability,
+      availability: dropZeroScores(newAvailability),
       created_at: p.created_at,
     }
   })

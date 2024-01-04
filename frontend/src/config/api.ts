@@ -57,8 +57,9 @@ export const APIPersonResponse = z.object({
 })
 export type APIPersonResponse = z.infer<typeof APIPersonResponse>
 
-const serialize_timescore = (ts: TimeScore): string => `${ts.time}__${ts.score}`
-const deserialize_timescore = (ts: string): TimeScore => {
+// serialize and deserialize TimeScores for the backend
+const serializeTimeScore = (ts: TimeScore): string => `${ts.time}__${ts.score}`
+const deserializeTimeScore = (ts: string): TimeScore => {
   const [timeStr, scoreStr] = ts.split('__')
   let score = parseInt(scoreStr)
   if (isNaN(score)) {
@@ -71,13 +72,13 @@ const deserialize_timescore = (ts: string): TimeScore => {
   const clamped = Math.min(Math.max(score, 0), MAXSCORE)
   return { time: timeStr, score: clamped }
 }
-const serialize_personinput = (input: PersonInput): APIPersonInput => {
-  return { availability: input.availability.map(serialize_timescore) }
+const serializePersonInput = (input: PersonInput): APIPersonInput => {
+  return { availability: input.availability.map(serializeTimeScore) }
 }
-const deserialize_personresponse = (response: APIPersonResponse): PersonResponse => {
+export const deserializePersonResponse = (response: APIPersonResponse): PersonResponse => {
   return {
     name: response.name,
-    availability: response.availability.map(deserialize_timescore),
+    availability: response.availability.map(deserializeTimeScore),
     created_at: response.created_at,
   }
 }
@@ -120,17 +121,17 @@ export const getStats = () => get('/stats', StatsResponse, undefined, { revalida
 export const getEvent = (eventId: string) => get(`/event/${eventId}`, EventResponse)
 export const getPeople = async (eventId: string) => {
   const res = await get(`/event/${eventId}/people`, APIPersonResponse.array())
-  return res.map(deserialize_personresponse)
+  return res.map(deserializePersonResponse)
 }
 export const getPerson = async (eventId: string, personName: string, password?: string) => {
   const res = await get(`/event/${eventId}/people/${personName}`, APIPersonResponse, password && btoa(password))
-  return deserialize_personresponse(res)
+  return deserializePersonResponse(res)
 }
 
 // Post
 export const createEvent = (input: EventInput) => post('/event', EventResponse, EventInput.parse(input))
 export const updatePerson = async (eventId: string, personName: string, input: PersonInput, password?: string) => {
-  const validated_input = APIPersonInput.parse(serialize_personinput(input))
+  const validated_input = APIPersonInput.parse(serializePersonInput(input))
   const res = await post(`/event/${eventId}/people/${personName}`, APIPersonResponse, validated_input, password && btoa(password), 'PATCH')
-  return deserialize_personresponse(res)
+  return deserializePersonResponse(res)
 }

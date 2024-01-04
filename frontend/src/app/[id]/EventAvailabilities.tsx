@@ -44,10 +44,6 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
   // Calculate table (using a web worker if available)
   const [table, setTable] = useState<ReturnType<typeof calculateTable>>()
 
-  // Desired meeting time duration in minutes (to calculate the best time)
-  // State is at this level so it doesn't change if we swap to the editor tab
-  const meetingDurationState = useState<number>(60)
-
   useEffect(() => {
     if (event && expandTimes.length > 0) {
       if (!tableWorker.current) {
@@ -171,10 +167,10 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
       times={expandedTimes}
       people={people}
       table={table}
-      meetingDurationState={meetingDurationState}
       eventId={event?.id}
       timeFormat={timeFormat}
       timezone={timezone}
+      displayBestFit={true}
     /> : user && <AvailabilityEditor
       eventId={event?.id}
       times={expandedTimes}

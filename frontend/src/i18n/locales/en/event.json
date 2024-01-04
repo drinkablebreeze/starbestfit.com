@@ -54,8 +54,8 @@
     "info2": "Click the names below to view people individually",
     "clipboard_message": "People available on {{date}}",
     "best_fit1": "For an event duration of",
-    "best_fit2": "the best fit is <strong>{{time}}</strong>",
-    "best_fit3": "<strong>{{bestTime}}</strong> and <strong>{{nextBest}}</strong> scored the highest with {{bestStars}} and {{nextStars}}. Between these two finalists, <strong>{{bestTime}}</strong> was preferred by {{frac}}% of people with a preference",
+    "best_fit2": "the best time is <1>{{time}}</1>",
+    "best_fit3": "<strong>{{bestTime}}</strong> and <strong>{{nextBest}}</strong> scored the highest with {{bestStars}} and {{nextStars}}<br/>Between these two finalists, <strong>{{bestTime}}</strong> was preferred by {{frac}}% of people with a preference",
     "hours_one": "{{count}} hour",
     "hours_other": "{{count}} hours",
     "minutes": "minutes"

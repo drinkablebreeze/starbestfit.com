@@ -24,13 +24,13 @@ interface AvailabilityViewerProps {
   times: string[]
   people: PersonResponse[]
   table?: ReturnType<typeof calculateTable>
-  meetingDurationState: [number, (newDur: number) => void]
   eventId?: string // used to seed PRNG
   timeFormat: '12h' | '24h'
   timezone: string
+  displayBestFit: boolean
 }
 
-const AvailabilityViewer = ({ times, people, table, meetingDurationState, eventId, timeFormat, timezone}: AvailabilityViewerProps) => {
+const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezone, displayBestFit }: AvailabilityViewerProps) => {
   const { t, i18n } = useTranslation('event')
 
   const highlight = useStore(useSettingsStore, state => state.highlight)
@@ -72,10 +72,13 @@ const AvailabilityViewer = ({ times, people, table, meetingDurationState, eventI
       .map(p => `${p.name} (${p.score})`)
   }
 
+  /* STAR results computation and formatting */
+
   // memoize the mapping of time strings to Temporal.ZonedDateTime objects
   const timeMap = useMemo(() => calculateTimeMap(times), [times])
 
-  const [meetingDuration, setMeetingDuration] = meetingDurationState
+  // Desired meeting time duration in minutes (to calculate the best time)
+  const [meetingDuration, setMeetingDuration] = useState<number>(60)
   const durationOptions = Array.from(Array(24 * 4).keys()).map(x => (x + 1) * 15)
   const durationLabels = durationOptions.map(
     x => `${t('group.hours', {count: Math.floor(x / 60)})} ${x % 60} ${t('minutes')}`
@@ -84,12 +87,16 @@ const AvailabilityViewer = ({ times, people, table, meetingDurationState, eventI
   const results = useMemo(
     () => calculateBestTime(
       times,
-      people.filter(p => filteredPeople.includes(p.name)),
+      // if we don't want to compute the best fit, we pass in no availabilities so the
+      // calculation short-circuits
+      displayBestFit
+        ? people.filter(p => filteredPeople.includes(p.name))
+        : [], 
       meetingDuration,
       eventId ?? "",
       timeMap,
     ),
-    [times, filteredPeople, people, meetingDuration, eventId, timeMap]
+    [times, filteredPeople, people, meetingDuration, eventId, timeMap, displayBestFit]
   )
   const formatTime = (timeScore: TimeScore | undefined) =>
     timeScore ? {
@@ -107,6 +114,8 @@ const AvailabilityViewer = ({ times, people, table, meetingDurationState, eventI
     ]
   },
   [results, i18n.language, timeFormat, timezone, filteredPeople.length])
+
+  /* End of STAR section */
 
   const heatmap = useMemo(() => table?.columns.map((column, x) => <Fragment key={x}>
     {column ? <div className={styles.dateColumn}>
@@ -279,7 +288,7 @@ const AvailabilityViewer = ({ times, people, table, meetingDurationState, eventI
           <Trans i18nKey="group.best_fit2" t={t} i18n={i18n}>
             {/* eslint-disable-next-line */}
             {/* @ts-ignore */}
-            _<strong>{{time: bestFormatted.time}}</strong>
+            _<strong className={styles.bestTime}>{{time: bestFormatted.time}}</strong>
           </Trans>
         </p>
         {nextFormatted && (fracFormatted !== undefined) && <p>
