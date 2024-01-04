@@ -34,8 +34,8 @@ const TranslateDialog = () => {
 
   return (store?.translateDialogDismissed === false && !isSupported) ? <div className={styles.popup}>
     <div>
-      <h2>Translate Crab Fit</h2>
-      <p>Crab Fit hasn't been translated to your language yet.</p>
+      <h2>Translate Star Fit</h2>
+      <p>Star Fit hasn't been translated to your language yet.</p>
     </div>
 
     <div className={styles.buttons}>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-const TRANSLATION_DISCLAIMER = 'While the translated document is provided for your convenience, the English version as displayed at https://crab.fit is legally binding.'
+const TRANSLATION_DISCLAIMER = 'While the translated document is provided for your convenience, the English version as displayed at https://starbestfit.com is legally binding.'
 
 interface GoogleTranslateProps {
   children: React.ReactNode

@@ -30,9 +30,9 @@ const Page = async () => {
 
       {!i18n.language.startsWith('en') && <GoogleTranslate language={i18n.language}>{t('privacy:translate')}</GoogleTranslate>}
 
-      <h3>Crab Fit</h3>
+      <h3>Star Fit</h3>
       <div id="policy">
-        <P>This SERVICE is provided by Benjamin Grant at no cost and is intended for use as is.</P>
+        <P>This SERVICE is provided at no cost and is intended for use as is.</P>
         <P>This page is used to inform visitors regarding the policies of the collection, use, and disclosure of Personal Information if using the Service.</P>
         <P>If you choose to use the Service, then you agree to the collection and use of information in relation to this policy. The Personal Information that is collected is used for providing and improving the Service. Your information will not be used or shared with anyone except as described in this Privacy Policy.</P>
 
@@ -41,15 +41,13 @@ const Page = async () => {
         <P>Links to privacy policies of the third party service providers used by the Service:</P>
         <Ul>
           <li><a href="https://www.google.com/policies/privacy/" target="blank">Google Play Services</a> (only used for Google Calendar sync)</li>
-          <li><a href="https://vercel.com/docs/concepts/analytics/privacy-policy" target="blank">Vercel Analytics</a></li>
         </Ul>
 
         <h2>Log Data</h2>
         <P>When you use the Service, in the case of an error, data and information is collected to improve the Service, which may include your IP address, device name, operating system version, app configuration and the time and date of the error.</P>
 
         <h2>Cookies</h2>
-        <P>Cookies are files with a small amount of data that are commonly used as anonymous unique identifiers. These are sent to your browser from the websites that you visit and are stored on your device's internal memory.</P>
-        <P>Cookies are used by Google Analytics to track you across the web and provide anonymous statistics to improve the Service.</P>
+        <P>Cookies are files with a small amount of data that are commonly used as unique identifiers. These are sent to your browser from the websites that you visit and are stored on your device's internal memory.</P>
 
         <h2>Service Providers</h2>
         <P>Third-party companies may be employed for the following reasons:</P>
@@ -73,10 +71,10 @@ const Page = async () => {
 
         <h2>Changes to This Privacy Policy</h2>
         <P>This Privacy Policy may be updated from time to time. Thus, you are advised to review this page periodically for any changes.</P>
-        <P>Last updated: 2023-06-10</P>
+        <P>Last updated: 2024-01-04</P>
 
         <h2>Contact Us</h2>
-        <P>If you have any questions or suggestions about the Privacy Policy, do not hesitate to contact us at <a href="mailto:contact@crab.fit">contact@crab.fit</a>.</P>
+        <P>If you have any questions or suggestions about the Privacy Policy, do not hesitate to contact us <a href="https://github.com/drinkablebreeze/crab.fit/issues">here</a>.</P>
       </div>
     </Content>
 

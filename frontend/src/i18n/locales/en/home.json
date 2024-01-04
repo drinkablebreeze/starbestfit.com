@@ -41,15 +41,15 @@
   },
 
   "about": {
-    "name": "About Crab Fit",
+    "name": "About Star Fit",
     "events": "Events created",
     "availabilities": "Preferences entered",
     "content": {
-      "p1": "Crab Fit helps you fit your event around everyone's schedules. Simply create an event above and send the link to everyone that is participating. Results update live and you will be able to see a heat-map of everyone's preferences. The best time for your desired event duration is calculated using <1>STAR Voting</1>.<3/><4>Learn more about how to Crab Fit</4>.",
-      "p3": "Created by <1>Ben Grant</1>, Crab Fit is the modern-day solution to your group event planning debates.",
-      "p4": "The code for Crab Fit is open source, if you find any issues or want to contribute, you can visit the <1>repository</1>. By using Crab Fit you agree to the <3>privacy policy</3>.",
+      "p1": "Star Fit helps you fit your event around everyone's schedules. Simply create an event above and send the link to everyone that is participating. Results update live and you will be able to see a heat-map of everyone's preferences. The best time for your desired event duration is calculated using <1>STAR Voting</1>.<3/><4>Learn more about how to Star Fit</4>.",
+      "p3": "Built on <1>Crab Fit</1> by <3>Ben Grant</3>, Star Fit is the modern-day solution to your group event planning debates.",
+      "p4": "The code for Star Fit is open source, if you find any issues or want to contribute, you can visit the <1>repository</1>. By using Star Fit you agree to the <3>privacy policy</3>.",
       "p6": "To protect your privacy, events are deleted after 3 months of inactivity, and all passwords are securely hashed.",
-      "p5": "Consider donating below if it helped you out so Crab Fit can stay free for everyone. 🦀"
+      "p5": "Consider donating below if it helped you out so Star Fit can stay free for everyone. ⭐️"
     },
     "chrome_extension": "Get the Chrome Extension",
     "firefox_extension": "Get the Firefox Extension",

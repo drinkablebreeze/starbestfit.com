@@ -15,4 +15,4 @@ Allow: /*.ico$
 Allow: /*.svg$
 Disallow: *
 
-Sitemap: https://crab.fit/sitemap.xml
+Sitemap: https://starbestfit.com/sitemap.xml

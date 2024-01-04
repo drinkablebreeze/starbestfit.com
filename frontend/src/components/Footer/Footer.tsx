@@ -13,8 +13,9 @@ interface FooterProps {
 const Footer = async ({ isSmall }: FooterProps) => {
   const { t } = await useTranslation('common')
   const isRunningInApp = headers().get('referer')?.includes('android-app://fit.crab')
+  const hideFooter = true
 
-  return isRunningInApp
+  return isRunningInApp || hideFooter
     ? null // Cannot show external donation link in an Android app
     : <footer
       id="donate" // Required to allow scrolling directly to the footer

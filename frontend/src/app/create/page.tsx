@@ -7,7 +7,7 @@ import Header from '/src/components/Header/Header'
 import Redirect from './Redirect'
 
 export const metadata: Metadata = {
-  title: 'Create a Crab Fit',
+  title: 'Create a Star Fit',
 }
 
 /**

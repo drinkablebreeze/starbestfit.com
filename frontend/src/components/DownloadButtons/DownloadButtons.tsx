@@ -11,7 +11,7 @@ import styles from './DownloadButtons.module.scss'
 const DownloadButtons = () => {
   const { t } = useTranslation('home')
 
-  const [isVisible, setIsVisible] = useState(true)
+  const [isVisible, setIsVisible] = useState(false) // TODO: update extensions
   const [browser, setBrowser] = useState<ReturnType<typeof detectBrowser>>()
 
   useEffect(() => {

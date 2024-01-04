@@ -1,10 +1,10 @@
 {
-  "name": "Crab Fit",
+  "name": "Star Fit",
   "tagline": "Create your own",
-  "cta": "Create your own Crab Fit!",
+  "cta": "Create your own Star Fit!",
   "created": "Created {{date}}",
   "donate": {
-    "info": "Thank you for using Crab Fit. If you like it, consider donating.",
+    "info": "Thank you for using Star Fit. If you like it, consider donating.",
     "button": "Donate",
     "title": "Every amount counts :)"
   },
@@ -45,11 +45,11 @@
     },
     "colormap": {
       "label": "Heatmap colors",
-      "classic": "Crab Fit (classic)"
+      "classic": "Star Fit (classic)"
     }
   },
   "video": {
-    "title": "Crab Fit Promotional Video",
+    "title": "Star Fit Promotional Video",
     "button": "Watch the video"
   }
 }
