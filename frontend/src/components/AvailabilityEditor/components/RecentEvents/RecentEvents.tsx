@@ -14,12 +14,13 @@ import styles from '../GoogleCalendar/GoogleCalendar.module.scss'
 interface RecentEventsProps {
   eventId?: string
   times: string[]
+  preferences: TimeScore[] // current preference selection
   onImport: (availability: TimeScore[]) => void
 }
 
 const hasAvailability = (event: RecentEvent): event is Required<RecentEvent> => event.user !== undefined
 
-const RecentEvents = ({ eventId, times, onImport }: RecentEventsProps) => {
+const RecentEvents = ({ eventId, times, preferences, onImport }: RecentEventsProps) => {
   const { t, i18n } = useTranslation('event')
 
   const allRecents = useStore(useRecentsStore, state => state.recents)
@@ -37,8 +38,10 @@ const RecentEvents = ({ eventId, times, onImport }: RecentEventsProps) => {
     const selectedRecent = recents.find(r => r.id === selected)
     if (!selectedRecent) return
 
-    onImport(selectedRecent.user.availability.filter(a => times.includes(a.time)))
-  }, [selected, recents])
+    const newValues = selectedRecent.user.availability.filter(a => times.includes(a.time))
+    const newRemoved = preferences.filter(ts => !newValues.some(ts2 => ts2.time === ts.time))
+    onImport([...newRemoved, ...newValues])
+  }, [selected, recents, preferences])
 
   // No recents
   if (recents.length === 0) return null
@@ -77,12 +80,12 @@ const RecentEvents = ({ eventId, times, onImport }: RecentEventsProps) => {
         </label>
       </div>)}
 
-      <div className={styles.info}>{t('you.integration.info')}</div>
+      <div className={styles.info}>{t('you.integration.recent.info')}</div>
       <Button
         isSmall
         disabled={selected === undefined}
         onClick={importAvailability}
-      >{t('you.integration.button')}</Button>
+      >{t('you.integration.recent.button')}</Button>
     </div>}
   </>
 }
