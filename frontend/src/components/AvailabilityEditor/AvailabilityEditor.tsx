@@ -98,6 +98,7 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, ta
         <RecentEvents
           eventId={eventId}
           times={times}
+          preferences={value}
           onImport={onChange}
         />
       </div>

@@ -173,13 +173,13 @@ const GoogleCalendar = ({ timezone, timeStart, timeEnd, times, preferences, sele
         <label className={styles.name} htmlFor={calendar.id} title={calendar.description}>{allowUrlToWrap(calendar.name)}</label>
       </div>)}
 
-      <div className={styles.info}>{t('you.integration.info')}</div>
+      <div className={styles.info}>{t('you.integration.calendar.info')}</div>
       <Button
         isSmall
         isLoading={isLoadingAvailability}
         disabled={isLoadingAvailability}
         onClick={() => importAvailability()}
-      >{t('you.integration.button')}</Button>
+      >{t('you.integration.calendar.button')}</Button>
     </div>}
 
     {/* Load google api scripts */}
