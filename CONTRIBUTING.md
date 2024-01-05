@@ -1,24 +1,24 @@
-# Contributing to Crab Fit
+# Contributing to Star Fit
 
 ## Creating Issues
 
-If you find any bugs or have a feature request, please [create an issue](https://github.com/GRA0007/crab.fit/issues/new/choose).
+If you find any bugs or have a feature request, please [create an issue](https://github.com/drinkablebreeze/starbestfit.com/issues/new/choose).
 
 ## Translating
 
-If you speak a language other than English and you want to help translate Crab Fit, visit [Crab Fit on Transifex](https://explore.transifex.com/crab-fit/crab-fit/) and click "Join this project".
+If you speak a language other than English and you want to help translate Star Fit, visit [Star Fit on Transifex](https://explore.transifex.com/star-fit/star-fit/) and click "Join this project".
 
-For more information on how to translate, visit the [translating wiki page](https://github.com/GRA0007/crab.fit/wiki/Translating).
+For more information on how to translate, visit the [translating wiki page](./wiki/Translating).
 
 ## Local Development
 
-This is a guide on getting Crab Fit working locally for development purposes. You should first follow this if you're thinking of making a [pull request](#pull-requests).
+This is a guide on getting Star Fit working locally for development purposes. You should first follow this if you're thinking of making a [pull request](#pull-requests).
 
-Note: if you'd like to get Crab Fit running because you want to have your own instance, please instead follow the [self-hosting](https://github.com/GRA0007/crab.fit/wiki/Self%E2%80%90hosting) guide.
+Note: if you'd like to get Star Fit running because you want to have your own instance, please instead follow the [self-hosting](./wiki/Self%E2%80%90hosting) guide.
 
 ### Software
 
-Crab Fit is written using Rust (for the API) and Next.js (for the frontend). Before you begin, you'll need to make sure you have the required software installed:
+Star Fit is written using Rust (for the API) and Next.js (for the frontend). Before you begin, you'll need to make sure you have the required software installed:
 
 | Software | Installation instructions |
 | --- | --- |
@@ -41,7 +41,7 @@ For code-specific documentation, please see the README files in the repo.
 
 ### Browser Extension
 
-The Crab Fit browser extension is currently an iFrame that points to `/create` on the frontend. To test, edit the `popup.html` file's iframe src to be `http://localhost:1234/create`, then view that in your browser.
+The Star Fit browser extension is currently an iFrame that points to `/create` on the frontend. To test, edit the `popup.html` file's iframe src to be `http://localhost:1234/create`, then view that in your browser.
 
 Note that you can't just visit the url directly, as it will redirect to the full create form if not running within an iFrame.
 

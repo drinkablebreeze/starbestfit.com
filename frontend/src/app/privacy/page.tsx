@@ -74,7 +74,7 @@ const Page = async () => {
         <P>Last updated: 2024-01-04</P>
 
         <h2>Contact Us</h2>
-        <P>If you have any questions or suggestions about the Privacy Policy, do not hesitate to contact us <a href="https://github.com/drinkablebreeze/crab.fit/issues">here</a>.</P>
+        <P>If you have any questions or suggestions about the Privacy Policy, do not hesitate to contact us <a href="https://github.com/drinkablebreeze/starbestfit.com/issues">here</a>.</P>
       </div>
     </Content>
 

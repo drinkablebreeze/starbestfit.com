@@ -1,6 +1,6 @@
-# Crab Fit Frontend
+# Star Fit Frontend
 
-This is the frontend for Crab Fit, written in TypeScript and SCSS, using Next.js app router.
+This is the frontend for Star Fit, written in TypeScript and SCSS, using Next.js app router.
 
 ## Environment
 
@@ -16,6 +16,6 @@ Translation files are located in `frontend/src/i18n/locales`. If you need to add
 
 ## Temporal API
 
-Crab Fit uses the new Temporal API for all date/time calculations and comparisons. Because this API is not yet supported by any browsers, the [@temporal-js/polyfill](https://github.com/js-temporal/temporal-polyfill) library is used, with the intention to remove this eventually once support is stable in all major browsers.
+Star Fit uses the new Temporal API for all date/time calculations and comparisons. Because this API is not yet supported by any browsers, the [@temporal-js/polyfill](https://github.com/js-temporal/temporal-polyfill) library is used, with the intention to remove this eventually once support is stable in all major browsers.
 
 Note that much of the Temporal logic is run only when necessary, as the polyfill being used is not optimised and will slow down the frontend otherwise.
