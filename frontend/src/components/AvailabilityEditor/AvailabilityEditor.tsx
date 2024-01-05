@@ -92,6 +92,7 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, ta
           timeStart={parseSpecificDate(times[0])}
           timeEnd={parseSpecificDate(times[times.length - 1]).add({ minutes: 15 })}
           times={times}
+          preferences={value}
           selectedScore={selectedScore}
           onImport={onChange}
         />

@@ -74,8 +74,8 @@
     "integration": {
       "logout": "log out",
       "close": "close",
-      "info": "Importing will overwrite your current preferences",
-      "button": "Import preferences"
+      "info": "1+ stars set free times to the score, 0 stars sets busy times to 0 stars",
+      "button": "Import availability"
     }
   }
 }
