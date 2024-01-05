@@ -3,8 +3,8 @@
  * We adhere as closely as possible to the official STAR Voting protocol.
  * However, some deviations are necessary to adapt STAR to this application.
  *
- * Basic rules:         https://www.starvoting.org/star
- * Tiebreaking rules:   https://www.starvoting.org/ties
+ * Basic rules:         https://starvoting.org/star
+ * Tiebreaking rules:   https://starvoting.org/ties
  *
  *
  * # Scores for "Meeting Times" Average the Component Timeslot Scores

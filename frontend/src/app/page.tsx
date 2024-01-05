@@ -36,7 +36,7 @@ const Page = async () => {
           <Stats />
         </Suspense>
 
-        <P><Trans i18nKey="about.content.p1" t={t} i18n={i18n}>_<Link href="https://www.starvoting.org/star">_</Link>_<br /><Link href="/how-to" rel="help">_</Link>_</Trans></P>
+        <P><Trans i18nKey="about.content.p1" t={t} i18n={i18n}>_<a href="https://starvoting.org/star" target="_blank" rel="noreferrer noopener">_</a>_<br /><Link href="/how-to" rel="help">_</Link>_</Trans></P>
         <P><Trans i18nKey="about.content.p3" t={t} i18n={i18n}>_<a href="https://crab.fit" target="_blank" rel="noreferrer noopener author">_</a>_<a href="https://bengrant.dev" target="_blank" rel="noreferrer noopener author">_</a>_</Trans></P>
 
         <Video />
