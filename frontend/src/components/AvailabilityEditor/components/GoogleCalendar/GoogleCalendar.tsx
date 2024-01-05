@@ -41,11 +41,12 @@ interface GoogleCalendarProps {
   timeStart: Temporal.ZonedDateTime
   timeEnd: Temporal.ZonedDateTime
   times: string[]
+  preferences: TimeScore[] // current preference selection
   selectedScore: number
   onImport: (availability: TimeScore[]) => void
 }
 
-const GoogleCalendar = ({ timezone, timeStart, timeEnd, times, selectedScore, onImport }: GoogleCalendarProps) => {
+const GoogleCalendar = ({ timezone, timeStart, timeEnd, times, preferences, selectedScore, onImport }: GoogleCalendarProps) => {
   if (!clientId || !apiKey) return null
 
   const { t } = useTranslation('event')
@@ -98,15 +99,24 @@ const GoogleCalendar = ({ timezone, timeStart, timeEnd, times, selectedScore, on
           end: new Date(a.end).valueOf(),
         }))) : []
 
-        // Set all times where nothing is booked to the selected score
-        onImport(times.filter((_, i) => !availabilities.some(a => epochTimes[i] >= a.start && epochTimes[i] < a.end))
-          .map(t => ({time: t, score: selectedScore})))
+        const timeInsideBusy = (i: number) =>
+          availabilities.some(a => epochTimes[i] >= a.start && epochTimes[i] < a.end)
+        // 1+ stars set free times to the score, 0 stars sets busy times to 0 stars
+        const newValues = (selectedScore > 0)
+          ? times
+            .filter((_, i) => !timeInsideBusy(i))
+            .map(t => ({time: t, score: selectedScore}))
+          : times
+            .filter((_, i) => timeInsideBusy(i))
+            .map(t => ({time: t, score: 0}))
+        const newRemoved = preferences.filter(ts => !newValues.some(ts2 => ts2.time === ts.time))
+        onImport([...newRemoved, ...newValues])
         setIsLoadingAvailability(false)
       }, e => {
         console.error(e)
         setIsLoadingAvailability(false)
       })
-  }, [calendars])
+  }, [ calendars, timezone, preferences, selectedScore, ])
 
   return <>
     {!calendars && <Button
