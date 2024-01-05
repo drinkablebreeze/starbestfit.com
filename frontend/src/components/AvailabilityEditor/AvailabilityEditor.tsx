@@ -1,6 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { Trans } from 'react-i18next/TransWithoutContext'
-import Link from 'next/link'
 
 import Button from '/src/components/Button/Button'
 import Content from '/src/components/Content/Content'
@@ -78,7 +77,7 @@ const AvailabilityEditor = ({ eventId, times, timezone, value = [], onChange, ta
   return <>
     <Content isCentered>
       <div>{t('you.info')}</div>
-      <div><Trans i18nKey="you.scoring_info" t={t} i18n={i18n}>_<Link href="https://www.starvoting.org/star">_</Link>_</Trans></div>
+      <div><Trans i18nKey="you.scoring_info" t={t} i18n={i18n}>_<a href="https://starvoting.org/star" target="_blank" rel="noreferrer noopener">_</a>_</Trans></div>
       <div className={styles.selectionControls}>
         <Button isSmall onClick={selectAll} title="Ctrl + A (⌘ A)">{t('you.select_all')}</Button>
         <Button isSmall onClick={selectNone} title="Ctrl + Shift + A (⌘ ⇧ A)">{t('you.select_none')}</Button>
