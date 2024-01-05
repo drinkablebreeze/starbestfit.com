@@ -1,11 +1,11 @@
 name: Bug report
-description: Report an issue on Crab Fit
+description: Report an issue on Star Fit
 labels:
   - bug
 body:
   - type: markdown
     attributes:
-      value: Check to make sure someone hasn't already opened a similar [issue](https://github.com/GRA0007/crab.fit/issues).
+      value: Check to make sure someone hasn't already opened a similar [issue](https://github.com/drinkablebreeze/starbestfit.com/issues).
 
   - type: textarea
     attributes:

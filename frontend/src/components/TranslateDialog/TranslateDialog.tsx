@@ -42,7 +42,7 @@ const TranslateDialog = () => {
       <Button
         target="_blank"
         rel="noreferrer noopener"
-        href="https://explore.transifex.com/crab-fit/crab-fit/"
+        href="https://explore.transifex.com/star-fit/star-fit/"
       >Help translate!</Button>
       <Button isSecondary onClick={() => store.dismissDialog()}>Close</Button>
     </div>

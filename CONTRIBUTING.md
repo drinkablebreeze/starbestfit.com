@@ -8,13 +8,13 @@ If you find any bugs or have a feature request, please [create an issue](https:/
 
 If you speak a language other than English and you want to help translate Star Fit, visit [Star Fit on Transifex](https://explore.transifex.com/star-fit/star-fit/) and click "Join this project".
 
-For more information on how to translate, visit the [translating wiki page](./wiki/Translating).
+For more information on how to translate, visit the [translating wiki page](./wiki/Translating.md).
 
 ## Local Development
 
 This is a guide on getting Star Fit working locally for development purposes. You should first follow this if you're thinking of making a [pull request](#pull-requests).
 
-Note: if you'd like to get Star Fit running because you want to have your own instance, please instead follow the [self-hosting](./wiki/Self%E2%80%90hosting) guide.
+Note: if you'd like to get Star Fit running because you want to have your own instance, please instead follow the [self-hosting](./wiki/Self%E2%80%90hosting.md) guide.
 
 ### Software
 

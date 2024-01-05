@@ -1,11 +1,11 @@
 name: Feature request
-description: Suggest an idea for Crab Fit
+description: Suggest an idea for Star Fit
 labels:
   - enhancement
 body:
   - type: markdown
     attributes:
-      value: Check to make sure someone hasn't already opened a similar [issue](https://github.com/GRA0007/crab.fit/issues).
+      value: Check to make sure someone hasn't already opened a similar [issue](https://github.com/drinkablebreeze/starbestfit.com/issues).
 
   - type: textarea
     attributes:
