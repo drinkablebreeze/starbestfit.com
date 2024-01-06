@@ -6,9 +6,7 @@
 Align your schedules to find the perfect time that works for everyone.
 Open-source and licensed under the [GNU GPLv3](./LICENSE).
 
-Star Fit is a fork of [Crab Fit](https://github.com/GRA0007/crab.fit) that supports multiple degrees of preference expression (0 to 5 stars) and uses [STAR Voting](https://starvoting.org/star) to automatically calculate the best event time.
-
-The [`star`](https://github.com/drinkablebreeze/starbestfit.com/tree/star) branch is a candidate for upstreaming into Crab Fit. It contains all the new scoring and tabulation code without the Star Fit naming that is used at [starbestfit.com](https://starbestfit.com).
+Star Fit is a fork of [Crab Fit](https://github.com/GRA0007/crab.fit) that supports multiple degrees of preference expression (0 to 5 stars) and uses [STAR Voting](https://starvoting.org/star) to automatically calculate the best event time. Tabulation details can be found at the top of [this file](./frontend/src/utils/star.ts).
 
 ### ⭐️ Bugs or feature requests
 
