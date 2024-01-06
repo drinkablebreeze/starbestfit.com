@@ -295,15 +295,14 @@ const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezon
           <Trans i18nKey="group.best_fit3" t={t} i18n={i18n}>
             {/* eslint-disable-next-line */}
             {/* @ts-ignore */}
-            _<strong>{{bestTime: bestFormatted.time}}</strong>
+            <strong>{{bestTime: bestFormatted.time}}</strong>
             {/* eslint-disable-next-line */}
             {/* @ts-ignore */}
             _<strong>{{nextBest: nextFormatted.time}}</strong>
-            {{
-              bestStars: bestFormatted.stars,
-              nextStars: nextFormatted.stars,
-              frac: fracFormatted,
-            }}
+            _{{ bestStars: bestFormatted.stars }}
+            _{{ nextStars: nextFormatted.stars }}
+            _{{ bestTime: bestFormatted.time }}
+            _{{ frac: fracFormatted }}_
           </Trans>
         </p>}
       </div>
