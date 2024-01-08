@@ -80,9 +80,14 @@ const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezon
   // Desired meeting time duration in minutes (to calculate the best time)
   const [meetingDuration, setMeetingDuration] = useState<number>(60)
   const durationOptions = Array.from(Array(24 * 4).keys()).map(x => (x + 1) * 15)
-  const durationLabels = durationOptions.map(
-    x => `${t('group.hours', {count: Math.floor(x / 60)})} ${x % 60} ${t('minutes')}`
-  )
+  const durationLabels = durationOptions.map(x => {
+    const hours = Math.floor(x / 60)
+    const minutes: number = (x % 60)
+    const hoursFormatted = hours > 0 ? t('group.hours', {count: hours}) : ""
+    const minutesFormatted = minutes > 0 ? `${minutes} ${t('minutes')}` : ""
+    const sep = ((hours > 0) && (minutes > 0)) ? " " : ""
+    return `${hoursFormatted}${sep}${minutesFormatted}`
+  })
 
   const results = useMemo(
     () => calculateBestTime(
@@ -104,16 +109,23 @@ const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezon
       stars: t('stars', {count: averageAndRound(timeScore.score, filteredPeople.length)})
     }
       : undefined
-  const [bestFormatted, nextFormatted, fracFormatted] = useMemo(() => {
-    return [
-      formatTime(results.bestTime),
-      formatTime(results.nextBest),
-      (results.preferredFraction !== undefined) // preferredFraction could be 0
-        ? (results.preferredFraction * 100).toFixed(2)
-        : undefined
-    ]
-  },
-  [results, i18n.language, timeFormat, timezone, filteredPeople.length])
+  const formatPersonVotes = (count: number | undefined) =>
+    (count !== undefined) ? t('group.people', {count: count}) : undefined
+  const [bestFormatted, nextFormatted, bestVotesPeople, nextVotesPeople, noPrefPeople] =
+    useMemo(() => {
+      return [
+        formatTime(results.bestTime),
+        formatTime(results.nextBest),
+        formatPersonVotes(results.bestVotes),
+        formatPersonVotes(results.nextVotes),
+        ((results.bestVotes !== undefined) && (results.nextVotes !== undefined))
+          ? formatPersonVotes(
+            filteredPeople.length - results.bestVotes - results.nextVotes
+          )
+          : undefined
+      ]
+    },
+    [results, i18n.language, timeFormat, timezone, filteredPeople.length])
 
   /* End of STAR section */
 
@@ -291,7 +303,11 @@ const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezon
             _<strong className={styles.bestTime}>{{time: bestFormatted.time}}</strong>
           </Trans>
         </p>
-        {nextFormatted && (fracFormatted !== undefined) && <p>
+        {nextFormatted
+        && (bestVotesPeople !== undefined)
+        && (nextVotesPeople !== undefined)
+        && (noPrefPeople !== undefined)
+        && <p>
           <Trans i18nKey="group.best_fit3" t={t} i18n={i18n}>
             {/* eslint-disable-next-line */}
             {/* @ts-ignore */}
@@ -301,8 +317,9 @@ const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezon
             _<strong>{{nextBest: nextFormatted.time}}</strong>
             _{{ bestStars: bestFormatted.stars }}
             _{{ nextStars: nextFormatted.stars }}
-            _{{ bestTime: bestFormatted.time }}
-            _{{ frac: fracFormatted }}_
+            _{{ bestVotesPeople }}
+            _{{ nextVotesPeople }}
+            _{{ noPrefPeople }}_
           </Trans>
         </p>}
       </div>
