@@ -6,6 +6,10 @@
  * Basic rules:         https://starvoting.org/star
  * Tiebreaking rules:   https://starvoting.org/ties
  *
+ * In STAR Voting, candidate times are scored 0 to 5 stars. The two highest
+ * scoring candidates proceed to the runoff round. In the runoff, each person's
+ * full vote goes to the candidate they prefer, if they had a preference.
+ *
  *
  * # Scores for "Meeting Times" Average the Component Timeslot Scores
  *
@@ -109,6 +113,28 @@
  * The mini rounds in the runoff are: rankedRobin, score, fiveStars, then
  * random. One winner is picked from the two candidates that advanced from the
  * scoring round.
+ *
+ *
+ * # Inspection
+ *
+ * As of this writing, details about the tabulation are logged in the browser's
+ * console. You can look at this object to better understand how a result was
+ * computed.
+ *
+ * The top-level object contains info for the scoring round, the runoff round,
+ * and the final results to display. The rounds list the candidates going into
+ * the round, the mini rounds used in the computation, and the winner(s) of the
+ * round.
+ *
+ * The mini round objects include the mini round type, the candidates going into
+ * the mini round with updated metrics (rank wins are calculated at the start of
+ * the mini round), the winner(s), and any candidates that are still tied.
+ *
+ * Candidate objects include the time ("date") of the candidate in UTC, the
+ * scores each person gave to a full event of the desired duration if it starts
+ * at that time, and the metrics used to compute mini round results (the total
+ * score given to the time, number of ranked wins if it's a rankedRobin round,
+ * the number of five-stars, and the random tie value)
  */
 
 import { Temporal } from '@js-temporal/polyfill'
@@ -153,7 +179,9 @@ export const averageAndRound = (score: number, numPeople: number): number => {
 export interface StarResults {
   bestTime?: TimeScore,
   nextBest?: TimeScore,
-  preferredFraction?: number // exists if both bestTime and nextBest exist
+  // these are defined if both bestTime and nextTime are defined
+  bestVotes?: number, // number of people that preferred the best time
+  nextVotes?: number, // number of people that preferred the next best time
 }
 
 export const calculateBestTime = (
@@ -167,7 +195,8 @@ export const calculateBestTime = (
     return ({
       bestTime: undefined,
       nextBest: undefined,
-      preferredFraction: undefined
+      bestVotes: undefined,
+      nextVotes: undefined,
     })
   }
   const t0 = performance.now()
@@ -377,7 +406,8 @@ const calculateStarBest = (
     return {
       bestTime: undefined,
       nextBest: undefined,
-      preferredFraction: undefined
+      bestVotes: undefined,
+      nextVotes: undefined,
     }
   }
   if (candidates.length === 1) {
@@ -389,7 +419,8 @@ const calculateStarBest = (
         score: candidates[0].score / numTimeslots,
       },
       nextBest: undefined,
-      preferredFraction: undefined
+      bestVotes: undefined,
+      nextVotes: undefined,
     }
   }
   // scoring round -> find the top two by score
@@ -401,11 +432,8 @@ const calculateStarBest = (
   const winner = runoffRound.winners[0] as Candidate
   const second =
     scoreRound.winners.find((w: Candidate) => w.date !== winner.date) as Candidate
-  const winnerRankedWins = getMetric(winner, "rankedRobin")
-  const secondRankedWins = getMetric(second, "rankedRobin")
-  const totalRankedWins = winnerRankedWins + secondRankedWins
-  // report the number of preferences expressed as 0 and not NaN
-  const preferredFraction = totalRankedWins ? winnerRankedWins / totalRankedWins : 0
+  const bestVotes = getMetric(winner, "rankedRobin")
+  const nextVotes = getMetric(second, "rankedRobin")
   const result = ({
     bestTime: {
       time: winner.date,
@@ -415,7 +443,8 @@ const calculateStarBest = (
       time: second.date,
       score: second.score / numTimeslots,
     },
-    preferredFraction,
+    bestVotes,
+    nextVotes,
   })
   console.log(({ scoreRound, runoffRound, result }))
   return result
