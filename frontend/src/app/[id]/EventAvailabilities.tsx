@@ -5,6 +5,7 @@ import { Trans } from 'react-i18next/TransWithoutContext'
 
 import AvailabilityEditor from '/src/components/AvailabilityEditor/AvailabilityEditor'
 import AvailabilityViewer from '/src/components/AvailabilityViewer/AvailabilityViewer'
+import Button from '/src/components/Button/Button'
 import Content from '/src/components/Content/Content'
 import Login from '/src/components/Login/Login'
 import Section from '/src/components/Section/Section'
@@ -171,7 +172,7 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
       timeFormat={timeFormat}
       timezone={timezone}
       displayBestFit={true}
-    /> : user && <AvailabilityEditor
+    /> : user && <><AvailabilityEditor
       eventId={event?.id}
       times={expandedTimes}
       timezone={timezone}
@@ -197,7 +198,12 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
           })
       }}
       table={table}
-    />}
+    />
+    <Content>
+      <div className={styles.done}>
+        <Button isSmall onClick={() => setTab('group')}>{t('you.done')}</Button>
+      </div>
+    </Content></>}
   </>
 }
 

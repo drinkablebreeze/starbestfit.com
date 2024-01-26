@@ -63,7 +63,7 @@
   },
 
   "you": {
-    "info": "Click and drag the calendar below to set your preferences",
+    "info": "Click and drag the calendar below to set your preferences. They are automatically saved.",
     "scoring_info": "The best time is calculated with <1>STAR Voting</1>. Give your preferred times five stars, your last choices zero stars, and score other times as desired.",
     "tabulation_info": "The two highest scoring times are finalists. Your full vote goes to the finalist you prefer.",
     "select_all": "Select all",
@@ -84,6 +84,7 @@
         "info": "1+ stars set free times to the score, 0 stars sets busy times to 0 stars",
         "button": "Import availability"
       }
-    }
+    },
+    "done": "Done"
   }
 }
