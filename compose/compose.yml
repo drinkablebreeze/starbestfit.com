@@ -31,9 +31,9 @@ services:
 #      - web
 #    labels:
 #      traefik.enable: true
-#      traefik.http.routers.local-localhost.rule: Host(`${FQDN}`)
-#      traefik.http.routers.local-localhost.tls: true
-#      traefik.http.routers.local-localhost.tls.certresolver: letsencrypt
+#      traefik.http.routers.localdomain-localhost.rule: Host(`${FQDN}`)
+#      traefik.http.routers.localdomain-localhost.tls: true
+#      traefik.http.routers.localdomain-localhost.tls.certresolver: letsencrypt
 
   api:
     image: ghcr.io/drinkablebreeze/starbestfit-api
@@ -55,9 +55,9 @@ services:
 #      - web
 #    labels:
 #      traefik.enable: true
-#      traefik.http.routers.local-localhost.rule: Host(`api.${FQDN}`)
-#      traefik.http.routers.local-localhost.tls: true
-#      traefik.http.routers.local-localhost.tls.certresolver: letsencrypt
+#      traefik.http.routers.localdomain-localhost-api.rule: Host(`api.${FQDN}`)
+#      traefik.http.routers.localdomain-localhost-api.tls: true
+#      traefik.http.routers.localdomain-localhost-api.tls.certresolver: letsencrypt
 
   database:
     image: postgres:15-alpine
