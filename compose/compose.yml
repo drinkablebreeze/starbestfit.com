@@ -29,6 +29,7 @@ services:
     networks:
       - internal
 #      - web
+#    labels:
 #      traefik.enable: true
 #      traefik.http.routers.local-localhost.rule: Host(`${FQDN}`)
 #      traefik.http.routers.local-localhost.tls: true
