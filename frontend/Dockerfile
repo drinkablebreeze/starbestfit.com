@@ -29,5 +29,6 @@ ENV NEXT_TELEMETRY_DISABLED 1
 # Build Next.js based on the preferred package manager
 RUN if [ -f yarn.lock ]; then yarn build; fi
 
+EXPOSE 3000
 ENTRYPOINT ["yarn"]
 CMD ["start"]
