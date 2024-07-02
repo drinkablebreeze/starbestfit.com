@@ -1,0 +1,76 @@
+volumes:
+  postgres:
+
+networks:
+  internal:
+#  web:
+#    external: true
+
+services:
+  frontend:
+    image: ghcr.io/drinkablebreeze/starbestfit-frontend
+    ports:
+      - "3001:3000"
+    dns: "127.0.0.11"
+    dns_search: "*"
+    build:
+      context: ../frontend/
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        FRONTEND_URL: ${FRONTEND_URL}
+        #NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        #NEXT_PUBLIC_GOOGLE_API_KEY
+    environment:
+      - NEXT_PUBLIC_API_URL
+      - FRONTEND_URL
+      - NODE_ENV=production
+      #- NEXT_PUBLIC_GOOGLE_CLIENT_ID
+      #- NEXT_PUBLIC_GOOGLE_API_KEY
+    networks:
+      - internal
+#      - web
+#      traefik.enable: true
+#      traefik.http.routers.local-localhost.rule: Host(`${FQDN}`)
+#      traefik.http.routers.local-localhost.tls: true
+#      traefik.http.routers.local-localhost.tls.certresolver: letsencrypt
+
+  api:
+    image: ghcr.io/drinkablebreeze/starbestfit-api
+    hostname: api.${FQDN}
+    ports:
+      - "3000:3000"
+    build:
+      context: ../api/
+    init: true
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL
+      - FRONTEND_URL
+#      - CRON_KEY
+    networks:
+      - internal
+#      - web
+#    labels:
+#      traefik.enable: true
+#      traefik.http.routers.local-localhost.rule: Host(`api.${FQDN}`)
+#      traefik.http.routers.local-localhost.tls: true
+#      traefik.http.routers.local-localhost.tls.certresolver: letsencrypt
+
+  database:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - POSTGRES_PASSWORD
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - internal
