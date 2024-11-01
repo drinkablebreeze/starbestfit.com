@@ -2,6 +2,7 @@ import { Trans } from 'react-i18next/TransWithoutContext'
 
 import Copyable from '/src/components/Copyable/Copyable'
 import { EventResponse } from '/src/config/api'
+import { AppBase } from '/src/config/app'
 import { useTranslation } from '/src/i18n/client'
 
 import styles from './EventInfo.module.scss'
@@ -16,10 +17,10 @@ const EventInfo = ({ event }: EventInfoProps) => {
   return <div className={styles.wrapper}>
     <h2>{event.name}</h2>
     <Copyable className={styles.info}>
-      {`https://starbestfit.com/${event.id}`}
+      {`${AppBase}${event.id}`}
     </Copyable>
     <p className={styles.info}>
-      <Trans i18nKey="event:nav.shareinfo_alt" t={t} i18n={i18n}>_<a href={`mailto:?subject=${encodeURIComponent(t('nav.email_subject', { event_name: event.name }))}&body=${encodeURIComponent(`${t('nav.email_body')} https://starbestfit.com/${event.id}`)}`} target="_blank">_</a>_</Trans>
+      <Trans i18nKey="event:nav.shareinfo_alt" t={t} i18n={i18n}>_<a href={`mailto:?subject=${encodeURIComponent(t('nav.email_subject', { event_name: event.name }))}&body=${encodeURIComponent(`${t('nav.email_body')} ${AppBase}${event.id}`)}`} target="_blank">_</a>_</Trans>
     </p>
   </div>
 }
