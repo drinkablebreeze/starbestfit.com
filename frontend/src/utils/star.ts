@@ -185,7 +185,7 @@ export interface StarResults {
 }
 
 export const calculateBestTime = (
-  times: string[],
+  times_orig: string[],
   people: PersonResponse[],
   duration: number, // meeting duration in minutes
   eventId: string,
@@ -200,6 +200,10 @@ export const calculateBestTime = (
     })
   }
   const t0 = performance.now()
+  // An bug was encountered in which there was a duplicated 24-hour block at
+  // the beginning of this array, which caused the calculation to fail and the
+  // app to crash. We deduplicate the times here to mitigate this issue.
+  const times = Array.from(new Set(times_orig))
   const fullPeopleScores = replaceScoresWithFullScores(times, people, duration, timeMap)
   // collate the list of people's responses to the candidate times
   const dateCollated = calculateAvailability(times, fullPeopleScores)
