@@ -18,6 +18,7 @@ import useRecentsStore from '/src/stores/recentsStore'
 import useSettingsStore from '/src/stores/settingsStore'
 import { calculateTable, expandTimes, makeClass } from '/src/utils'
 import { dropZeroScores } from '/src/utils/star'
+import { hasDstMismatch, isLocalWeekdayFormat } from '/src/utils/weeklyFormat'
 
 import styles from './page.module.scss'
 
@@ -50,7 +51,7 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
       if (!tableWorker.current) {
         tableWorker.current = window.Worker ? new Worker(new URL('/src/workers/calculateTable', import.meta.url)) : undefined
       }
-      const args = { times: expandedTimes, locale: i18n.language, timeFormat, timezone }
+      const args = { times: expandedTimes, locale: i18n.language, timeFormat, timezone, eventTimezone: event.timezone }
       if (tableWorker.current) {
         tableWorker.current.onmessage = (e: MessageEvent<ReturnType<typeof calculateTable>>) => setTable(e.data)
         tableWorker.current.postMessage(args)
@@ -132,6 +133,10 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
             </Trans>
           </p>
         )}
+
+        {event?.timezone && isLocalWeekdayFormat(event.times) && event.timezone !== timezone && hasDstMismatch(event.timezone, timezone) && (
+          <p>{t('form.dst_warning')}</p>
+        )}
       </Content>
     </Section>
 
@@ -171,6 +176,7 @@ const EventAvailabilities = ({ event }: EventAvailabilitiesProps) => {
       eventId={event?.id}
       timeFormat={timeFormat}
       timezone={timezone}
+      eventTimezone={event?.timezone}
       displayBestFit={true}
     /> : user && <><AvailabilityEditor
       eventId={event?.id}

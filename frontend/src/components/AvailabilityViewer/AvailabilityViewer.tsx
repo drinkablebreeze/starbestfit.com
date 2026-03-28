@@ -27,10 +27,11 @@ interface AvailabilityViewerProps {
   eventId?: string // used to seed PRNG
   timeFormat: '12h' | '24h'
   timezone: string
+  eventTimezone?: string
   displayBestFit: boolean
 }
 
-const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezone, displayBestFit }: AvailabilityViewerProps) => {
+const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezone, eventTimezone, displayBestFit }: AvailabilityViewerProps) => {
   const { t, i18n } = useTranslation('event')
 
   const highlight = useStore(useSettingsStore, state => state.highlight)
@@ -75,7 +76,7 @@ const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezon
   /* STAR results computation and formatting */
 
   // memoize the mapping of time strings to Temporal.ZonedDateTime objects
-  const timeMap = useMemo(() => calculateTimeMap(times), [times])
+  const timeMap = useMemo(() => calculateTimeMap(times, eventTimezone), [times, eventTimezone])
 
   // Desired meeting time duration in minutes (to calculate the best time)
   const [meetingDuration, setMeetingDuration] = useState<number>(60)
@@ -105,7 +106,7 @@ const AvailabilityViewer = ({ times, people, table, eventId, timeFormat, timezon
   )
   const formatTime = (timeScore: TimeScore | undefined) =>
     timeScore ? {
-      time: timeToLocaleString(timeScore.time, i18n.language, timeFormat, timezone),
+      time: timeToLocaleString(timeScore.time, i18n.language, timeFormat, timezone, eventTimezone),
       stars: t('stars', {count: averageAndRound(timeScore.score, filteredPeople.length)})
     }
       : undefined

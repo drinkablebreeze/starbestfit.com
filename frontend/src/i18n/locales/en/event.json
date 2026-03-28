@@ -30,7 +30,8 @@
     },
 
     "created_in_timezone": "This event was created in the timezone <strong>{{timezone}}</strong>. <3>Click here</3> to use it.",
-    "local_timezone": "Your local timezone is detected to be <strong>{{timezone}}</strong>. <3>Click here</3> to use it."
+    "local_timezone": "Your local timezone is detected to be <strong>{{timezone}}</strong>. <3>Click here</3> to use it.",
+    "dst_warning": "Your timezone and the event timezone have different daylight saving rules. Times may shift by ~1 hour near DST transitions."
   },
   "offline": {
     "title": "You are offline",

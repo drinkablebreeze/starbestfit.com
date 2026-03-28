@@ -72,22 +72,24 @@ const CreateForm = ({ noRedirect }: { noRedirect?: boolean }) => {
       const isSpecificDates = dates[0].length !== 1
 
       const times = dates.flatMap(dateStr => {
-        const date = isSpecificDates
-          ? Temporal.PlainDate.from(dateStr)
-          : Temporal.Now.plainDateISO().add({ days: Number(dateStr) - Temporal.Now.plainDateISO().dayOfWeek })
-
         const hours = time.start > time.end ? [...range(0, time.end - 1), ...range(time.start, 23)] : range(time.start, time.end - 1)
 
-        return hours.map(hour => {
-          const dateTime = date.toZonedDateTime({ timeZone: timezone, plainTime: Temporal.PlainTime.from({ hour }) }).withTimeZone('UTC')
-          if (isSpecificDates) {
+        if (isSpecificDates) {
+          const date = Temporal.PlainDate.from(dateStr)
+          return hours.map(hour => {
+            const dateTime = date.toZonedDateTime({ timeZone: timezone, plainTime: Temporal.PlainTime.from({ hour }) }).withTimeZone('UTC')
             // Format as `HHmm-DDMMYYYY`
             return `${dateTime.hour.toString().padStart(2, '0')}${dateTime.minute.toString().padStart(2, '0')}-${dateTime.day.toString().padStart(2, '0')}${dateTime.month.toString().padStart(2, '0')}${dateTime.year.toString().padStart(4, '0')}`
-          } else {
-            // Format as `HHmm-d`
-            return `${dateTime.hour.toString().padStart(2, '0')}${dateTime.minute.toString().padStart(2, '0')}-${String(dateTime.dayOfWeek === 7 ? 0 : dateTime.dayOfWeek)}`
-          }
-        })
+          })
+        } else {
+          // Weekly poll: store local time in event timezone with ~ separator
+          // Format as `HHmm~d` (e.g., `1900~1` = 7pm Monday in event timezone)
+          const dayOfWeek = Number(dateStr)
+          return hours.map(hour => {
+            const hh = hour.toString().padStart(2, '0')
+            return `${hh}00~${dayOfWeek === 7 ? 0 : dayOfWeek}`
+          })
+        }
       })
 
       if (times.length === 0) {

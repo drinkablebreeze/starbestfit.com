@@ -2,31 +2,36 @@ import { calculateColumns } from '/src/utils/calculateColumns'
 import { calculateRows } from '/src/utils/calculateRows'
 import { convertTimesToDates } from '/src/utils/convertTimesToDates'
 import { serializeTime } from '/src/utils/serializeTime'
+import { isLocalWeekdayFormat } from '/src/utils/weeklyFormat'
 
 export interface CalculateTableArgs {
-  /** As `HHmm-DDMMYYYY` or `HHmm-d` strings */
+  /** As `HHmm-DDMMYYYY`, `HHmm-d`, or `HHmm~d` strings */
   times: string[]
   locale: string
   timeFormat: '12h' | '24h'
   timezone: string
+  /** The timezone the event was created in (needed for `HHmm~d` format) */
+  eventTimezone?: string
 }
 
 /**
  * Take rows and columns and turn them into a data structure representing an availability table
  */
 export const calculateTable = ({
-  /** As `HHmm-DDMMYYYY` or `HHmm-d` strings */
   times,
   locale,
   timeFormat,
   timezone,
+  eventTimezone,
 }: CalculateTableArgs) => {
-  const dates = convertTimesToDates(times, timezone)
+  const dates = convertTimesToDates(times, timezone, eventTimezone)
   const rows = calculateRows(dates)
   const columns = calculateColumns(dates)
 
   // Is specific dates or just days of the week
   const isSpecificDates = times[0]?.length === 13
+  // For new weekly format, pass eventTimezone to serializeTime for correct round-trip
+  const serializeEventTz = isLocalWeekdayFormat(times) ? eventTimezone : undefined
 
   return {
     rows: rows.map(row => row && row.minute === 0 ? {
@@ -43,7 +48,7 @@ export const calculateTable = ({
       cells: rows.map(row => {
         if (!row) return null
         const date = column.toZonedDateTime({ timeZone: timezone, plainTime: row })
-        const serialized = serializeTime(date, isSpecificDates)
+        const serialized = serializeTime(date, isSpecificDates, serializeEventTz)
 
         // Cell not in dates
         if (!times.includes(serialized)) return null

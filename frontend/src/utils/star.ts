@@ -224,9 +224,10 @@ export type TimeMap = {
 // Converting the time strings to Temporal.ZondedDateTime objects is costly, so
 // we mitigate this by calculating it only once for each time and putting
 // that in a map. E.g. for 224 times (7 days, 9:00-17:00), this takes ~16ms
-export const calculateTimeMap = (times: string[]): TimeMap => {
-  // timezone doesn't matter here, assume UTC
-  const timeObjects = convertTimesToDates(times, 'UTC')
+export const calculateTimeMap = (times: string[], eventTimezone?: string): TimeMap => {
+  // For temporal ordering, we need correct instants. For new weekly format,
+  // use the event timezone; for legacy format, UTC is fine.
+  const timeObjects = convertTimesToDates(times, eventTimezone ?? 'UTC', eventTimezone)
   const map: TimeMap = {}
   for (let i = 0; i < times.length; i++) {
     map[times[i]] = timeObjects[i]
