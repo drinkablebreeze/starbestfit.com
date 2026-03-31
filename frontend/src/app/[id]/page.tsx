@@ -7,6 +7,7 @@ import { Temporal } from '@js-temporal/polyfill'
 import Content from '/src/components/Content/Content'
 import Copyable from '/src/components/Copyable/Copyable'
 import { getEvent } from '/src/config/api'
+import { AppBase } from '/src/config/app'
 import { useTranslation } from '/src/i18n/server'
 import { makeClass, relativeTimeFormat } from '/src/utils'
 
@@ -49,10 +50,10 @@ const Page = async ({ params }: PageProps) => {
         >{t('common:created', { date: relativeTimeFormat(Temporal.Instant.fromEpochSeconds(event.created_at), i18n.language) })}</span>
 
         <Copyable className={styles.info}>
-          {`https://starbestfit.com/${event.id}`}
+          {`${AppBase}${event.id}`}
         </Copyable>
         <p className={makeClass(styles.info, styles.noPrint)}>
-          <Trans i18nKey="event:nav.shareinfo" t={t} i18n={i18n}>_<a href={`mailto:?subject=${encodeURIComponent(t('event:nav.email_subject', { event_name: event.name }))}&body=${encodeURIComponent(`${t('event:nav.email_body')} https://starbestfit.com/${event.id}`)}`}>_</a>_</Trans>
+          <Trans i18nKey="event:nav.shareinfo" t={t} i18n={i18n}>_<a href={`mailto:?subject=${encodeURIComponent(t('event:nav.email_subject', { event_name: event.name }))}&body=${encodeURIComponent(`${t('event:nav.email_body')} ${AppBase}${event.id}`)}`}>_</a>_</Trans>
         </p>
       </Content>
     </Suspense>

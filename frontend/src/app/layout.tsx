@@ -3,6 +3,7 @@ import { Karla } from 'next/font/google'
 
 import Egg from '/src/components/Egg/Egg'
 import Settings from '/src/components/Settings/Settings'
+import { AppBase } from '/src/config/app'
 import TranslateDialog from '/src/components/TranslateDialog/TranslateDialog'
 import { fallbackLng } from '/src/i18n/options'
 import { useTranslation } from '/src/i18n/server'
@@ -12,7 +13,7 @@ import './global.css'
 const karla = Karla({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://starbestfit.com'),
+  metadataBase: AppBase,
   title: {
     absolute: 'Star Fit',
     template: '%s - Star Fit',
